@@ -96,7 +96,12 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                 const res = await fetch('/api/products');
                 if (res.ok) {
                     const data = await res.json();
-                    setProducts(data);
+                    // Postgres returns DECIMAL as string, so we need to cast it
+                    const formattedDetails = data.map((p: any) => ({
+                        ...p,
+                        price: Number(p.price)
+                    }));
+                    setProducts(formattedDetails);
                 }
             } catch (error) {
                 console.error("Failed to fetch products", error);
