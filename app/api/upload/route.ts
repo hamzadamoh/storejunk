@@ -9,6 +9,10 @@ export async function POST(request: Request): Promise<NextResponse> {
         return NextResponse.json({ error: 'Filename and body are required' }, { status: 400 });
     }
 
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+        return NextResponse.json({ error: 'BLOB_READ_WRITE_TOKEN is not set' }, { status: 500 });
+    }
+
     try {
         const blob = await put(filename, request.body, {
             access: 'public',
@@ -16,6 +20,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
         return NextResponse.json(blob);
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to upload' }, { status: 500 });
+        console.error("Upload Error:", error);
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
