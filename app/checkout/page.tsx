@@ -12,9 +12,7 @@ export default function CheckoutPage() {
     const router = useRouter();
     const [paymentMethod, setPaymentMethod] = useState("card");
 
-    const taxRate = 0.08; // 8% tax mock
-    const taxAmount = cartTotal * taxRate;
-    const finalTotal = cartTotal + taxAmount;
+    const finalTotal = cartTotal;
 
     if (cartItems.length === 0) {
         return (
@@ -168,10 +166,7 @@ export default function CheckoutPage() {
                                 <span>Subtotal</span>
                                 <span>${cartTotal.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between text-sm text-muted-gold">
-                                <span>Digital Tax (8%)</span>
-                                <span>${taxAmount.toFixed(2)}</span>
-                            </div>
+
                             <div className="pt-3 border-t border-border-dark flex justify-between">
                                 <span className="font-black uppercase tracking-widest">Total</span>
                                 <span className="font-black text-xl text-primary tracking-tighter">${finalTotal.toFixed(2)}</span>
