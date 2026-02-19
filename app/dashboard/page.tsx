@@ -10,6 +10,7 @@ export default function DashboardPage() {
     const { collections, addCollection, deleteCollection } = useCollections();
 
     const [activeTab, setActiveTab] = useState<"products" | "categories">("products");
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
     // Product Form State
     const [newProduct, setNewProduct] = useState({
@@ -73,6 +74,28 @@ export default function DashboardPage() {
             }
             return { ...prev, images: newImages };
         });
+    };
+
+    const handleDragStart = (e: React.DragEvent, index: number) => {
+        setDraggedIndex(index);
+        e.dataTransfer.effectAllowed = "move";
+    };
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === index) return;
+
+        const newImages = [...newProduct.images];
+        const draggedItem = newImages[draggedIndex];
+        newImages.splice(draggedIndex, 1);
+        newImages.splice(index, 0, draggedItem);
+
+        setNewProduct(prev => ({ ...prev, images: newImages }));
+        setDraggedIndex(index);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedIndex(null);
     };
 
     const handleProductSubmit = async (e: React.FormEvent) => {
@@ -229,7 +252,14 @@ export default function DashboardPage() {
                                         {newProduct.images.length > 0 && (
                                             <div className="flex gap-2 mt-2 overflow-x-auto p-2">
                                                 {newProduct.images.map((img, i) => (
-                                                    <div key={i} className="relative w-24 h-24 shrink-0 rounded-md overflow-hidden group border border-stone-200 dark:border-stone-700">
+                                                    <div
+                                                        key={i}
+                                                        draggable
+                                                        onDragStart={(e) => handleDragStart(e, i)}
+                                                        onDragOver={(e) => handleDragOver(e, i)}
+                                                        onDragEnd={handleDragEnd}
+                                                        className={`relative w-24 h-24 shrink-0 rounded-md overflow-hidden group border border-stone-200 dark:border-stone-700 cursor-move transition-all ${draggedIndex === i ? 'opacity-50 ring-2 ring-primary scale-95' : ''}`}
+                                                    >
                                                         <img src={img} alt="preview" className="w-full h-full object-cover" />
 
                                                         {/* Delete Button */}

@@ -13,7 +13,7 @@ type CartItem = {
 type CartContextType = {
     cartItems: CartItem[];
     isCartOpen: boolean;
-    addToCart: (item: CartItem) => void;
+    addToCart: (item: CartItem, openDrawer?: boolean) => void;
     removeFromCart: (id: string) => void;
     clearCart: () => void;
     toggleCart: () => void;
@@ -26,9 +26,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
 
-    const addToCart = (item: CartItem) => {
+    const addToCart = (item: CartItem, openDrawer = true) => {
         setCartItems((prev) => [...prev, item]);
-        setIsCartOpen(true); // Open drawer when adding
+        if (openDrawer) setIsCartOpen(true); // Open drawer only if requested
     };
 
     const removeFromCart = (id: string) => {

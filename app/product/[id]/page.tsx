@@ -36,7 +36,7 @@ export default function DynamicProductPage() {
                 price: product.price,
                 img: product.images[0],
                 type: product.type
-            });
+            }, false); // don't open drawer
             router.push("/checkout");
         }
     };
