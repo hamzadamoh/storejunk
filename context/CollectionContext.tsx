@@ -40,31 +40,43 @@ const initialCollections: Collection[] = [
 const CollectionContext = createContext<CollectionContextType | undefined>(undefined);
 
 export function CollectionProvider({ children }: { children: ReactNode }) {
-    const [collections, setCollections] = useState<Collection[]>(initialCollections);
+    const [collections, setCollections] = useState<Collection[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load from localStorage
+    // Load from API
     useEffect(() => {
-        const saved = localStorage.getItem("tinysteps_collections");
-        if (saved) {
+        async function fetchCollections() {
             try {
-                setCollections(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to parse collections", e);
+                const res = await fetch('/api/collections');
+                if (res.ok) {
+                    const data = await res.json();
+                    setCollections(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch collections", error);
+            } finally {
+                setIsLoaded(true);
             }
         }
-        setIsLoaded(true);
+        fetchCollections();
     }, []);
 
-    // Save to localStorage
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem("tinysteps_collections", JSON.stringify(collections));
-        }
-    }, [collections, isLoaded]);
-
-    const addCollection = (collection: Collection) => {
+    const addCollection = async (collection: Collection) => {
         setCollections((prev) => [...prev, collection]);
+        try {
+            await fetch('/api/collections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: collection.id,
+                    title: collection.title,
+                    description: collection.description,
+                    hero_image: collection.heroImage
+                }),
+            });
+        } catch (error) {
+            console.error("Failed to add collection", error);
+        }
     };
 
     const deleteCollection = (id: string) => {

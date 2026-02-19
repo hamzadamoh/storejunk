@@ -29,22 +29,32 @@ export default function DashboardPage() {
         heroImage: "" // Base64
     });
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "product" | "collection") => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "product" | "collection") => {
         const files = e.target.files;
         if (!files) return;
 
-        Array.from(files).forEach(file => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result as string;
+        // Upload each file
+        for (const file of Array.from(files)) {
+            try {
+                // Determine destination
+                const res = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
+                    method: 'POST',
+                    body: file,
+                });
+
+                if (!res.ok) throw new Error("Upload failed");
+                const blob = await res.json();
+
                 if (type === "product") {
-                    setNewProduct(prev => ({ ...prev, images: [...prev.images, base64String] }));
+                    setNewProduct(prev => ({ ...prev, images: [...prev.images, blob.url] }));
                 } else {
-                    setNewCollection(prev => ({ ...prev, heroImage: base64String }));
+                    setNewCollection(prev => ({ ...prev, heroImage: blob.url }));
                 }
-            };
-            reader.readAsDataURL(file);
-        });
+            } catch (err) {
+                console.error(err);
+                alert("Failed to upload " + file.name);
+            }
+        }
     };
 
     const handleProductSubmit = (e: React.FormEvent) => {

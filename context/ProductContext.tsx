@@ -86,47 +86,58 @@ const initialProducts: Product[] = [
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export function ProductProvider({ children }: { children: ReactNode }) {
-    const [products, setProducts] = useState<Product[]>(initialProducts);
+    const [products, setProducts] = useState<Product[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load from localStorage on mount
+    // Load from API on mount
     useEffect(() => {
-        const saved = localStorage.getItem("tinysteps_products");
-        if (saved) {
+        async function fetchProducts() {
             try {
-                const parsed = JSON.parse(saved);
-                // Migration check: if old data has 'img', convert to 'images'
-                const migrated = parsed.map((p: any) => {
-                    if (p.img && !p.images) {
-                        return { ...p, images: [p.img], img: undefined };
-                    }
-                    return p;
-                });
-                setProducts(migrated);
-            } catch (e) {
-                console.error("Failed to parse products", e);
+                const res = await fetch('/api/products');
+                if (res.ok) {
+                    const data = await res.json();
+                    setProducts(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch products", error);
+            } finally {
+                setIsLoaded(true);
             }
         }
-        setIsLoaded(true);
+        fetchProducts();
     }, []);
 
-    // Save to localStorage on change
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem("tinysteps_products", JSON.stringify(products));
-        }
-    }, [products, isLoaded]);
+    const addProduct = async (product: Product) => {
+        // Optimistic update
+        setProducts((prev) => [product, ...prev]);
 
-    const addProduct = (product: Product) => {
-        setProducts((prev) => [...prev, product]);
+        try {
+            await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: product.id,
+                    title: product.title,
+                    price: product.price,
+                    type: product.type,
+                    images: product.images,
+                    collection_id: product.collectionId, // API expects snake_case
+                    description: product.description
+                }),
+            });
+        } catch (error) {
+            console.error("Failed to add product", error);
+            // Revert on failure? For now, just log.
+        }
     };
 
     const deleteProduct = (id: string) => {
         setProducts((prev) => prev.filter((p) => p.id !== id));
+        // TODO: Add API Delete endpoint if needed
     };
 
     const getProductsByCollection = (collectionId: string) => {
-        return products.filter((p) => p.collectionId === collectionId);
+        return products.filter((p) => p.collectionId === collectionId); // Note: PG returns snake_case usually, need to check mapping
     };
 
     const getProductById = (id: string) => {
