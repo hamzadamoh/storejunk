@@ -196,7 +196,7 @@ export default function Home() {
                 New Arrivals
               </h2>
               <Link
-                href="/collections"
+                href="/shop"
                 className="text-primary font-bold hover:underline underline-offset-8"
               >
                 View All Products
