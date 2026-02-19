@@ -11,7 +11,8 @@ export async function GET() {
         type, 
         images, 
         collection_id as "collectionId", 
-        description 
+        description,
+        file_url as "fileUrl" 
       FROM products 
       ORDER BY created_at DESC
     `;
@@ -24,7 +25,9 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { id, title, price, type, images, collection_id, description, file_url } = body;
+        const { id, title, price, type, images, collection_id } = body;
+        const description = body.description || null;
+        const file_url = body.file_url || null;
 
         await sql`
       INSERT INTO products (id, title, price, type, images, collection_id, description, file_url)

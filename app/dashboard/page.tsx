@@ -72,7 +72,7 @@ export default function DashboardPage() {
         });
     };
 
-    const handleProductSubmit = (e: React.FormEvent) => {
+    const handleProductSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newProduct.title || !newProduct.price || newProduct.images.length === 0) {
             alert("Please fill in all fields and upload at least one image.");
@@ -90,17 +90,21 @@ export default function DashboardPage() {
             fileUrl: newProduct.fileUrl
         };
 
-        addProduct(product);
-        setNewProduct({
-            collectionId: "",
-            type: "Digital Kit",
-            title: "",
-            price: "",
-            images: [],
-            description: "",
-            fileUrl: ""
-        });
-        alert("Product added successfully!");
+        try {
+            await addProduct(product);
+            setNewProduct({
+                collectionId: "",
+                type: "Digital Kit",
+                title: "",
+                price: "",
+                images: [],
+                description: "",
+                fileUrl: ""
+            });
+            alert("Product added successfully!");
+        } catch (error) {
+            alert("Failed to add product. Please check your connection or database.");
+        }
     };
 
     const handleCollectionSubmit = (e: React.FormEvent) => {

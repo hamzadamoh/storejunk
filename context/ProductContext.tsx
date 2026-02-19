@@ -118,7 +118,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         setProducts((prev) => [product, ...prev]);
 
         try {
-            await fetch('/api/products', {
+            const res = await fetch('/api/products', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -132,9 +132,15 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                     file_url: product.fileUrl
                 }),
             });
+
+            if (!res.ok) {
+                throw new Error("Failed to persist product");
+            }
         } catch (error) {
             console.error("Failed to add product", error);
-            // Revert on failure? For now, just log.
+            // Revert on failure
+            setProducts((prev) => prev.filter(p => p.id !== product.id));
+            throw error;
         }
     };
 
