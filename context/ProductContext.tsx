@@ -134,7 +134,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
             });
 
             if (!res.ok) {
-                throw new Error("Failed to persist product");
+                const errorData = await res.json();
+                throw new Error(errorData.details || errorData.error || "Failed to persist product");
             }
         } catch (error) {
             console.error("Failed to add product", error);

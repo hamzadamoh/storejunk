@@ -106,7 +106,7 @@ export default function DashboardPage() {
             });
             alert("Product added successfully!");
         } catch (error) {
-            alert("Failed to add product. Please check your connection or database.");
+            alert(`Failed to add product: ${(error as Error).message}`);
         }
     };
 
