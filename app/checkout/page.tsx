@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+import PayPalButtonWrapper from "@/components/PayPalButtonWrapper";
 
 export default function CheckoutPage() {
     const { cartItems, cartTotal } = useCart();
-    const [paymentMethod, setPaymentMethod] = useState("stripe");
+    const [paymentMethod, setPaymentMethod] = useState("card");
 
     const taxRate = 0.08; // 8% tax mock
     const taxAmount = cartTotal * taxRate;
@@ -80,30 +82,32 @@ export default function CheckoutPage() {
                         </div>
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <button onClick={() => setPaymentMethod("stripe")} className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${paymentMethod === "stripe" ? "border-primary bg-primary/5 text-white" : "border-border-dark bg-surface-dark text-muted-gold hover:border-muted-gold"}`}>
-                                    <span className="material-symbols-outlined">credit_card</span> <span className="font-bold">Stripe</span>
+                                <button onClick={() => setPaymentMethod("card")} className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${paymentMethod === "card" ? "border-primary bg-primary/5 text-white" : "border-border-dark bg-surface-dark text-muted-gold hover:border-muted-gold"}`}>
+                                    <span className="material-symbols-outlined">credit_card</span> <span className="font-bold">Card</span>
                                 </button>
                                 <button onClick={() => setPaymentMethod("paypal")} className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${paymentMethod === "paypal" ? "border-primary bg-primary/5 text-white" : "border-border-dark bg-surface-dark text-muted-gold hover:border-muted-gold"}`}>
                                     <span className="material-symbols-outlined">payments</span> <span className="font-bold">PayPal</span>
                                 </button>
                             </div>
-                            {/* Card Details (Mockup) */}
-                            <div className="bg-surface-dark/50 p-6 rounded-xl border border-border-dark space-y-4">
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-gold">Card Details (Demo)</label>
-                                    <input type="text" placeholder="•••• •••• •••• ••••" className="w-full bg-background-dark border-border-dark rounded-lg px-4 py-3 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-muted-gold/40" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input type="text" placeholder="MM / YY" className="w-full bg-background-dark border-border-dark rounded-lg px-4 py-3" />
-                                    <input type="text" placeholder="CVC" className="w-full bg-background-dark border-border-dark rounded-lg px-4 py-3" />
-                                </div>
+
+                            {/* Payment Action Area */}
+                            <div className="mt-8 bg-surface-dark/50 p-6 rounded-xl border border-border-dark">
+                                <PayPalScriptProvider options={{ clientId: "test", components: "buttons", currency: "USD" }}>
+                                    {paymentMethod === "paypal" ? (
+                                        <div className="space-y-4">
+                                            <p className="text-sm text-muted-gold mb-2 text-center">Pay with your PayPal account</p>
+                                            <PayPalButtonWrapper currency={"USD"} showSpinner={true} amount={finalTotal.toFixed(2)} fundingSource="paypal" />
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <p className="text-sm text-muted-gold mb-2 text-center">Pay with Debit or Credit Card</p>
+                                            <PayPalButtonWrapper currency={"USD"} showSpinner={true} amount={finalTotal.toFixed(2)} fundingSource="card" />
+                                        </div>
+                                    )}
+                                </PayPalScriptProvider>
                             </div>
                         </div>
                     </section>
-
-                    <button onClick={() => alert("Thank you for your purchase! (This is a demo)")} className="w-full py-5 rounded-xl bg-primary text-background-dark font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(230,179,25,0.3)] hover:brightness-110 transition-all flex items-center justify-center gap-3">
-                        Complete Purchase & Download <span className="material-symbols-outlined">arrow_forward</span>
-                    </button>
                 </div>
 
                 {/* Right Column: Order Summary */}

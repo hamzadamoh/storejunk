@@ -72,8 +72,13 @@ export default function Footer() {
                             </Link>
                         </li>
                         <li>
-                            <Link href="/help" className="hover:text-primary transition-colors">
+                            <Link href="/policies/refund-policy" className="hover:text-primary transition-colors">
                                 Return Policy
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/policies/shipping-policy" className="hover:text-primary transition-colors">
+                                Delivery Info
                             </Link>
                         </li>
                     </ul>
@@ -100,11 +105,17 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase tracking-widest">
                 <p>© 2024 TinyStepsArtLTD. All Rights Reserved.</p>
                 <div className="flex gap-6">
-                    <Link href="/licenses" className="hover:text-white">
+                    <Link href="/policies/privacy-policy" className="hover:text-white">
                         Privacy
                     </Link>
-                    <Link href="/licenses" className="hover:text-white">
+                    <Link href="/policies/terms-of-service" className="hover:text-white">
                         Terms
+                    </Link>
+                    <Link href="/policies/refund-policy" className="hover:text-white">
+                        Refunds
+                    </Link>
+                    <Link href="/policies/shipping-policy" className="hover:text-white">
+                        Delivery
                     </Link>
                     <Link href="/dashboard" className="hover:text-white">
                         Admin
