@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useProducts, Product } from "@/context/ProductContext";
 import { useCollections, Collection } from "@/context/CollectionContext";
+import { useSettings } from "@/context/SettingsContext";
 import Link from "next/link";
 
 export default function DashboardPage() {
     const { products, addProduct, deleteProduct } = useProducts();
     const { collections, addCollection, deleteCollection } = useCollections();
+    const { isTestMode, toggleTestMode } = useSettings();
 
     const [activeTab, setActiveTab] = useState<"products" | "categories">("products");
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -169,6 +171,18 @@ export default function DashboardPage() {
                         <span className="material-symbols-outlined mr-2 align-middle">home</span>
                         View Site
                     </Link>
+
+                    <button
+                        onClick={toggleTestMode}
+                        className={`w-full text-left block p-3 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors ${isTestMode ? "text-green-400 hover:bg-green-400/10" : "text-stone-400 hover:bg-white/10"}`}
+                    >
+                        <span className="material-symbols-outlined mr-2 align-middle">
+                            {isTestMode ? "toggle_on" : "toggle_off"}
+                        </span>
+                        Test Mode: {isTestMode ? "ON" : "OFF"}
+                    </button>
+
+                    <div className="h-px bg-white/10 my-4"></div>
                     <button
                         onClick={() => setActiveTab("products")}
                         className={`w-full text-left block p-3 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === "products" ? "bg-primary/20 text-primary" : "hover:bg-white/10 text-stone-300"}`}

@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { useSettings } from "@/context/SettingsContext";
 import { useRouter } from "next/navigation";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import PayPalButtonWrapper from "@/components/PayPalButtonWrapper";
 
 export default function CheckoutPage() {
     const { cartItems, cartTotal, clearCart } = useCart();
+    const { isTestMode } = useSettings();
     const router = useRouter();
     const [paymentMethod, setPaymentMethod] = useState("card");
 
@@ -92,41 +94,63 @@ export default function CheckoutPage() {
 
                             {/* Payment Action Area */}
                             <div className="mt-8 bg-surface-dark/50 p-6 rounded-xl border border-border-dark">
-                                <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test", components: "buttons", currency: "USD" }}>
-                                    {paymentMethod === "paypal" ? (
-                                        <div className="space-y-4">
-                                            <p className="text-sm text-muted-gold mb-2 text-center">Pay with your PayPal account</p>
-                                            <PayPalButtonWrapper
-                                                currency={"USD"}
-                                                showSpinner={true}
-                                                amount={finalTotal.toFixed(2)}
-                                                fundingSource="paypal"
-                                                onSuccess={(details) => {
-                                                    const productIds = cartItems.map(item => item.id).join(",");
-                                                    console.log("Payment successful", details);
-                                                    clearCart();
-                                                    router.push(`/thank-you?products=${productIds}`);
-                                                }}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            <p className="text-sm text-muted-gold mb-2 text-center">Pay with Debit or Credit Card</p>
-                                            <PayPalButtonWrapper
-                                                currency={"USD"}
-                                                showSpinner={true}
-                                                amount={finalTotal.toFixed(2)}
-                                                fundingSource="card"
-                                                onSuccess={(details) => {
-                                                    const productIds = cartItems.map(item => item.id).join(",");
-                                                    console.log("Payment successful", details);
-                                                    clearCart();
-                                                    router.push(`/thank-you?products=${productIds}`);
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                </PayPalScriptProvider>
+                                {isTestMode && (
+                                    <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-500 p-4 rounded-xl text-center font-bold mb-6">
+                                        <span className="material-symbols-outlined align-middle mr-2">warning</span>
+                                        TEST MODE ACTIVE - No real payments will be processed
+                                    </div>
+                                )}
+
+                                {isTestMode ? (
+                                    <button
+                                        onClick={() => {
+                                            const productIds = cartItems.map(item => item.id).join(",");
+                                            console.log("Test Payment successful");
+                                            clearCart();
+                                            router.push(`/thank-you?products=${productIds}`);
+                                        }}
+                                        className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined">check_circle</span>
+                                        SIMULATE SUCCESSFUL PAYMENT
+                                    </button>
+                                ) : (
+                                    <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test", components: "buttons", currency: "USD" }}>
+                                        {paymentMethod === "paypal" ? (
+                                            <div className="space-y-4">
+                                                <p className="text-sm text-muted-gold mb-2 text-center">Pay with your PayPal account</p>
+                                                <PayPalButtonWrapper
+                                                    currency={"USD"}
+                                                    showSpinner={true}
+                                                    amount={finalTotal.toFixed(2)}
+                                                    fundingSource="paypal"
+                                                    onSuccess={(details) => {
+                                                        const productIds = cartItems.map(item => item.id).join(",");
+                                                        console.log("Payment successful", details);
+                                                        clearCart();
+                                                        router.push(`/thank-you?products=${productIds}`);
+                                                    }}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <p className="text-sm text-muted-gold mb-2 text-center">Pay with Debit or Credit Card</p>
+                                                <PayPalButtonWrapper
+                                                    currency={"USD"}
+                                                    showSpinner={true}
+                                                    amount={finalTotal.toFixed(2)}
+                                                    fundingSource="card"
+                                                    onSuccess={(details) => {
+                                                        const productIds = cartItems.map(item => item.id).join(",");
+                                                        console.log("Payment successful", details);
+                                                        clearCart();
+                                                        router.push(`/thank-you?products=${productIds}`);
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </PayPalScriptProvider>
+                                )}
                             </div>
                         </div>
                     </section>
