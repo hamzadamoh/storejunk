@@ -43,7 +43,10 @@ export default function DashboardPage() {
                     body: file,
                 });
 
-                if (!res.ok) throw new Error("Upload failed");
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || "Upload failed");
+                }
                 const blob = await res.json();
 
                 if (type === "product") {
@@ -55,7 +58,7 @@ export default function DashboardPage() {
                 }
             } catch (err) {
                 console.error(err);
-                alert("Failed to upload " + file.name);
+                alert(`Failed to upload ${file.name}: ${(err as Error).message}`);
             }
         }
     };
