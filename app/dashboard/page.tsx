@@ -18,7 +18,8 @@ export default function DashboardPage() {
         type: "Digital Kit",
         collectionId: "", // Will default to first collection
         description: "",
-        images: [] as string[] // Array of Base64 strings
+        images: [] as string[], // Array of Base64 strings
+        fileUrl: ""
     });
 
     // Category Form State
@@ -29,7 +30,7 @@ export default function DashboardPage() {
         heroImage: "" // Base64
     });
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "product" | "collection") => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "product" | "collection" | "product_file") => {
         const files = e.target.files;
         if (!files) return;
 
@@ -47,6 +48,8 @@ export default function DashboardPage() {
 
                 if (type === "product") {
                     setNewProduct(prev => ({ ...prev, images: [...prev.images, blob.url] }));
+                } else if (type === "product_file") {
+                    setNewProduct(prev => ({ ...prev, fileUrl: blob.url }));
                 } else {
                     setNewCollection(prev => ({ ...prev, heroImage: blob.url }));
                 }
@@ -55,6 +58,18 @@ export default function DashboardPage() {
                 alert("Failed to upload " + file.name);
             }
         }
+    };
+
+    const moveImage = (index: number, direction: 'left' | 'right') => {
+        setNewProduct(prev => {
+            const newImages = [...prev.images];
+            const targetIndex = direction === 'left' ? index - 1 : index + 1;
+
+            if (targetIndex >= 0 && targetIndex < newImages.length) {
+                [newImages[index], newImages[targetIndex]] = [newImages[targetIndex], newImages[index]];
+            }
+            return { ...prev, images: newImages };
+        });
     };
 
     const handleProductSubmit = (e: React.FormEvent) => {
@@ -72,6 +87,7 @@ export default function DashboardPage() {
             images: newProduct.images, // Use the base64 array
             collectionId: newProduct.collectionId || collections[0]?.id || "gothic-noir",
             description: newProduct.description,
+            fileUrl: newProduct.fileUrl
         };
 
         addProduct(product);
@@ -81,7 +97,8 @@ export default function DashboardPage() {
             title: "",
             price: "",
             images: [],
-            description: ""
+            description: "",
+            fileUrl: ""
         });
         alert("Product added successfully!");
     };
@@ -205,17 +222,57 @@ export default function DashboardPage() {
                                         {newProduct.images.length > 0 && (
                                             <div className="flex gap-2 mt-2 overflow-x-auto p-2">
                                                 {newProduct.images.map((img, i) => (
-                                                    <div key={i} className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden group">
+                                                    <div key={i} className="relative w-24 h-24 shrink-0 rounded-md overflow-hidden group border border-stone-200 dark:border-stone-700">
                                                         <img src={img} alt="preview" className="w-full h-full object-cover" />
+
+                                                        {/* Delete Button */}
                                                         <button
                                                             type="button"
                                                             onClick={() => setNewProduct(prev => ({ ...prev, images: prev.images.filter((_, idx) => idx !== i) }))}
-                                                            className="absolute top-0 right-0 bg-red-500 text-white text-[10px] p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                                            title="Remove"
                                                         >
-                                                            X
+                                                            <span className="material-symbols-outlined text-[10px] block">close</span>
                                                         </button>
+
+                                                        {/* Reorder Buttons */}
+                                                        <div className="absolute bottom-0 left-0 right-0 flex justify-between bg-black/60 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => moveImage(i, 'left')}
+                                                                disabled={i === 0}
+                                                                className="text-white hover:text-primary disabled:opacity-30 disabled:hover:text-white"
+                                                                title="Move Left"
+                                                            >
+                                                                <span className="material-symbols-outlined text-sm block">chevron_left</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => moveImage(i, 'right')}
+                                                                disabled={i === newProduct.images.length - 1}
+                                                                className="text-white hover:text-primary disabled:opacity-30 disabled:hover:text-white"
+                                                                title="Move Right"
+                                                            >
+                                                                <span className="material-symbols-outlined text-sm block">chevron_right</span>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase tracking-widest text-stone-500 mb-2">Digital Product File (PDF/ZIP)</label>
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.zip,.rar"
+                                            className="w-full bg-stone-100 dark:bg-stone-900 border-none rounded-lg p-3 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-charcoal hover:file:bg-primary/80"
+                                            onChange={(e) => handleImageUpload(e, "product_file")}
+                                        />
+                                        {newProduct.fileUrl && (
+                                            <div className="mt-2 text-xs text-green-500 flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-sm">check_circle</span>
+                                                File uploaded: {newProduct.fileUrl.split('/').pop()}
                                             </div>
                                         )}
                                     </div>
@@ -233,10 +290,10 @@ export default function DashboardPage() {
                                     </button>
                                 </form>
                             </div>
-                        </div>
+                        </div >
 
                         {/* Existing Products List */}
-                        <div className="space-y-6">
+                        < div className="space-y-6" >
                             <h3 className="text-xl font-bold dark:text-white mb-4">Inventory ({products.length})</h3>
                             <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                                 {products.map(product => (
@@ -259,8 +316,8 @@ export default function DashboardPage() {
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    </div>
+                        </div >
+                    </div >
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                         {/* Add Category Form */}
@@ -349,8 +406,9 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     </div>
-                )}
-            </main>
-        </div>
+                )
+                }
+            </main >
+        </div >
     );
 }

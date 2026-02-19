@@ -15,6 +15,7 @@ type CartContextType = {
     isCartOpen: boolean;
     addToCart: (item: CartItem) => void;
     removeFromCart: (id: string) => void;
+    clearCart: () => void;
     toggleCart: () => void;
     cartTotal: number;
 };
@@ -34,6 +35,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCartItems((prev) => prev.filter((item) => item.id !== id));
     };
 
+    const clearCart = () => {
+        setCartItems([]);
+    };
+
     const toggleCart = () => {
         setIsCartOpen((prev) => !prev);
     };
@@ -47,6 +52,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 isCartOpen,
                 addToCart,
                 removeFromCart,
+                clearCart,
                 toggleCart,
                 cartTotal,
             }}

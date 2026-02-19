@@ -8,7 +8,7 @@ const amount = "15.00";
 const currency = "USD";
 const style = { "layout": "vertical" };
 
-export default function PayPalButtonWrapper({ amount, currency, showSpinner, fundingSource }: { amount: string, currency: string, showSpinner: boolean, fundingSource?: string }) {
+export default function PayPalButtonWrapper({ amount, currency, showSpinner, fundingSource, onSuccess }: { amount: string, currency: string, showSpinner: boolean, fundingSource?: string, onSuccess?: (details: any) => void }) {
     // usePayPalScriptReducer can be use only inside children of PayPalScriptProviders
     // This is the main reason to wrap the PayPalButtons in a new component
     const [{ options, isPending }, dispatch] = usePayPalScriptReducer();
@@ -52,8 +52,11 @@ export default function PayPalButtonWrapper({ amount, currency, showSpinner, fun
                 }}
                 onApprove={(data, actions) => {
                     if (actions.order) { // Check if actions.order is defined
-                        return actions.order.capture().then(function () {
+                        return actions.order.capture().then(function (details) {
                             // Your code here after capture the order
+                            if (onSuccess) {
+                                onSuccess(details);
+                            }
                         });
                     }
                     return Promise.resolve();

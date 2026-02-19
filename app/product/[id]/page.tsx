@@ -79,13 +79,12 @@ export default function DynamicProductPage() {
                     <div className="lg:col-span-7 flex flex-col md:flex-row-reverse gap-4">
                         {/* Main Image */}
                         <div className="flex-1">
-                            <div className="aspect-[4/5] bg-neutral-dark rounded-xl overflow-hidden grunge-border relative group">
-                                <div
-                                    className="w-full h-full bg-center bg-no-repeat bg-cover transition-transform duration-700 group-hover:scale-105"
-                                    style={{
-                                        backgroundImage: `url('${selectedImage}')`,
-                                    }}
-                                ></div>
+                            <div className="bg-neutral-dark rounded-xl overflow-hidden grunge-border relative group">
+                                <img
+                                    src={selectedImage}
+                                    alt={product.title}
+                                    className="w-full h-auto max-h-[80vh] object-contain transition-transform duration-700 group-hover:scale-105"
+                                />
                             </div>
                         </div>
                         {/* Thumbnails */}

@@ -24,6 +24,7 @@ async function seed() {
         images TEXT[] NOT NULL,
         collection_id VARCHAR(255) REFERENCES collections(id),
         description TEXT,
+        file_url TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;

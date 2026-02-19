@@ -10,6 +10,7 @@ export type Product = {
     images: string[]; // Changed from img: string
     collectionId: string;
     description?: string;
+    fileUrl?: string;
 };
 
 type ProductContextType = {
@@ -127,7 +128,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                     type: product.type,
                     images: product.images,
                     collection_id: product.collectionId, // API expects snake_case
-                    description: product.description
+                    description: product.description,
+                    file_url: product.fileUrl
                 }),
             });
         } catch (error) {

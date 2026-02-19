@@ -24,11 +24,11 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { id, title, price, type, images, collection_id, description } = body;
+        const { id, title, price, type, images, collection_id, description, file_url } = body;
 
         await sql`
-      INSERT INTO products (id, title, price, type, images, collection_id, description)
-      VALUES (${id}, ${title}, ${price}, ${type}, ${images}, ${collection_id}, ${description})
+      INSERT INTO products (id, title, price, type, images, collection_id, description, file_url)
+      VALUES (${id}, ${title}, ${price}, ${type}, ${images}, ${collection_id}, ${description}, ${file_url})
     `;
 
         return NextResponse.json({ message: 'Product created' }, { status: 201 });
