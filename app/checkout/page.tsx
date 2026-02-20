@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useSettings } from "@/context/SettingsContext";
+import { useOrders } from "@/context/OrderContext";
 import { useRouter } from "next/navigation";
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import PayPalButtonWrapper from "@/components/PayPalButtonWrapper";
@@ -11,8 +12,24 @@ import PayPalButtonWrapper from "@/components/PayPalButtonWrapper";
 export default function CheckoutPage() {
     const { cartItems, cartTotal, clearCart } = useCart();
     const { isTestMode } = useSettings();
+    const { addOrder } = useOrders();
     const router = useRouter();
     const [paymentMethod, setPaymentMethod] = useState("card");
+
+    const saveOrder = async (method: string) => {
+        try {
+            await addOrder({
+                id: Date.now().toString(),
+                email: '',
+                items: cartItems.map(item => ({ id: item.id, title: item.title, price: item.price, type: item.type })),
+                total: finalTotal,
+                payment_method: method,
+                is_test: isTestMode,
+            });
+        } catch (err) {
+            console.error('Failed to save order:', err);
+        }
+    };
 
     const finalTotal = cartTotal;
 
@@ -103,9 +120,10 @@ export default function CheckoutPage() {
 
                                 {isTestMode ? (
                                     <button
-                                        onClick={() => {
+                                        onClick={async () => {
                                             const productIds = cartItems.map(item => item.id).join(",");
                                             console.log("Test Payment successful");
+                                            await saveOrder('test');
                                             clearCart();
                                             router.push(`/thank-you?products=${productIds}`);
                                         }}
@@ -124,9 +142,10 @@ export default function CheckoutPage() {
                                                     showSpinner={true}
                                                     amount={finalTotal.toFixed(2)}
                                                     fundingSource="paypal"
-                                                    onSuccess={(details) => {
+                                                    onSuccess={async (details) => {
                                                         const productIds = cartItems.map(item => item.id).join(",");
                                                         console.log("Payment successful", details);
+                                                        await saveOrder('paypal');
                                                         clearCart();
                                                         router.push(`/thank-you?products=${productIds}`);
                                                     }}
@@ -140,9 +159,10 @@ export default function CheckoutPage() {
                                                     showSpinner={true}
                                                     amount={finalTotal.toFixed(2)}
                                                     fundingSource="card"
-                                                    onSuccess={(details) => {
+                                                    onSuccess={async (details) => {
                                                         const productIds = cartItems.map(item => item.id).join(",");
                                                         console.log("Payment successful", details);
+                                                        await saveOrder('card');
                                                         clearCart();
                                                         router.push(`/thank-you?products=${productIds}`);
                                                     }}

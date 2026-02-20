@@ -4,14 +4,16 @@ import { useState } from "react";
 import { useProducts, Product } from "@/context/ProductContext";
 import { useCollections, Collection } from "@/context/CollectionContext";
 import { useSettings } from "@/context/SettingsContext";
+import { useOrders } from "@/context/OrderContext";
 import Link from "next/link";
 
 export default function DashboardPage() {
     const { products, addProduct, deleteProduct } = useProducts();
     const { collections, addCollection, deleteCollection } = useCollections();
     const { isTestMode, toggleTestMode } = useSettings();
+    const { orders, isLoading: ordersLoading } = useOrders();
 
-    const [activeTab, setActiveTab] = useState<"products" | "categories">("products");
+    const [activeTab, setActiveTab] = useState<"products" | "categories" | "orders">("products");
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
     // Product Form State
@@ -197,13 +199,20 @@ export default function DashboardPage() {
                         <span className="material-symbols-outlined mr-2 align-middle">category</span>
                         Categories
                     </button>
+                    <button
+                        onClick={() => setActiveTab("orders")}
+                        className={`w-full text-left block p-3 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === "orders" ? "bg-primary/20 text-primary" : "hover:bg-white/10 text-stone-300"}`}
+                    >
+                        <span className="material-symbols-outlined mr-2 align-middle">receipt_long</span>
+                        Orders
+                    </button>
                 </nav>
             </aside>
 
             {/* Main Content */}
             <main className="flex-1 p-6 md:p-12 overflow-y-auto">
                 <h2 className="text-3xl font-black italic text-charcoal dark:text-white mb-8">
-                    {activeTab === "products" ? "Product Management" : "Category Management"}
+                    {activeTab === "products" ? "Product Management" : activeTab === "categories" ? "Category Management" : "Order History"}
                 </h2>
 
                 {activeTab === "products" ? (
@@ -459,6 +468,66 @@ export default function DashboardPage() {
                     </div>
                 )
                 }
+
+                {activeTab === "orders" && (
+                    <div className="space-y-6">
+                        {ordersLoading ? (
+                            <div className="text-center py-12 text-stone-400">
+                                <span className="material-symbols-outlined text-4xl animate-spin">progress_activity</span>
+                                <p className="mt-4">Loading orders...</p>
+                            </div>
+                        ) : orders.length === 0 ? (
+                            <div className="text-center py-12 bg-white dark:bg-stone-800 rounded-2xl border border-border-gold/20">
+                                <span className="material-symbols-outlined text-5xl text-stone-400">receipt_long</span>
+                                <p className="mt-4 text-stone-400">No orders yet</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm text-stone-400">{orders.length} total orders</p>
+                                </div>
+                                {orders.map((order) => (
+                                    <div key={order.id} className="bg-white dark:bg-stone-800 p-6 rounded-2xl border border-border-gold/20 shadow-xl">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <span className={`material-symbols-outlined text-2xl ${order.is_test ? 'text-yellow-500' : 'text-green-500'}`}>
+                                                    {order.is_test ? 'science' : 'check_circle'}
+                                                </span>
+                                                <div>
+                                                    <p className="font-bold dark:text-white">Order #{order.id.slice(-6)}</p>
+                                                    <p className="text-xs text-stone-400">
+                                                        {new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xl font-bold text-primary">${Number(order.total).toFixed(2)}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    {order.is_test && (
+                                                        <span className="bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">Test</span>
+                                                    )}
+                                                    <span className="bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">{order.status}</span>
+                                                    <span className="text-[10px] text-stone-400 uppercase">{order.payment_method}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="border-t border-stone-200 dark:border-stone-700 pt-4 space-y-2">
+                                            {(Array.isArray(order.items) ? order.items : []).map((item, idx) => (
+                                                <div key={idx} className="flex justify-between text-sm">
+                                                    <span className="dark:text-stone-300">{item.title}</span>
+                                                    <span className="font-bold dark:text-white">${Number(item.price).toFixed(2)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {order.email && (
+                                            <p className="mt-3 text-xs text-stone-400">Email: {order.email}</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </main >
         </div >
     );
