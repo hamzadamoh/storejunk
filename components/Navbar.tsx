@@ -9,9 +9,8 @@ export default function Navbar() {
         <header className="sticky top-0 z-50 w-full flex flex-col">
             <nav className="w-full border-b border-white/5 bg-charcoal/95 backdrop-blur-md px-6 lg:px-20 py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    {/* Logo Area */}
-                    <div className="flex items-center gap-3">
-                        <div className="bg-primary p-1.5 rounded-lg flex items-center justify-center">
+                    <Link href="/" className="flex items-center gap-3 group">
+                        <div className="bg-primary p-1.5 rounded-lg flex items-center justify-center group-hover:bg-white transition-colors">
                             <span className="material-symbols-outlined text-charcoal font-bold">
                                 auto_stories
                             </span>
@@ -19,7 +18,7 @@ export default function Navbar() {
                         <h1 className="font-serif text-2xl font-bold tracking-tight text-white italic">
                             TinyStepsArtLTD
                         </h1>
-                    </div>
+                    </Link>
 
                     {/* Main Nav Links */}
                     <div className="hidden md:flex items-center gap-10">
@@ -36,7 +35,7 @@ export default function Navbar() {
                             New Arrivals
                         </Link>
                         <Link
-                            href="/product/botanical-grimoire"
+                            href="/shop"
                             className="text-stone-400 hover:text-primary text-sm font-medium transition-colors"
                         >
                             Digital Kits

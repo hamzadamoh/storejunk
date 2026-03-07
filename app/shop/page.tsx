@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useProducts } from "@/context/ProductContext";
 import { useCart } from "@/context/CartContext";
+import FallbackImage from "@/components/FallbackImage";
 
 export default function ShopPage() {
     const { products } = useProducts();
@@ -29,9 +30,10 @@ export default function ShopPage() {
                             {products.map((product) => (
                                 <div key={product.id} className="group space-y-4">
                                     <Link href={`/product/${product.id}`} className="block relative overflow-hidden rounded-xl bg-white dark:bg-stone-800 shadow-xl aspect-square">
-                                        <img
+                                        <FallbackImage
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                             alt={product.title}
+                                            title={product.title}
                                             src={product.images[0]}
                                         />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
