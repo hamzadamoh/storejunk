@@ -270,7 +270,7 @@ export default function Home() {
                     {step.num}
                   </div>
                   <h3 className="font-bold text-xl text-charcoal dark:text-stone-200">{step.title}</h3>
-                  <span className="material-symbols-outlined text-primary/40 dark:text-primary/20 text-4xl">
+                  <span className="material-symbols-outlined text-[#d4af37]/70 text-5xl drop-shadow-sm">
                     {step.icon}
                   </span>
                 </div>
@@ -298,10 +298,16 @@ export default function Home() {
                 <div key={product.id} className="group space-y-4">
                   <Link href={`/product/${product.id}`} className="block relative overflow-hidden rounded-xl bg-white dark:bg-stone-800 shadow-xl aspect-square">
                     <div className="absolute top-3 left-3 z-10 bg-[#4a1c1c] text-[#f4ebd8] px-2 py-0.5 text-[10px] font-serif font-bold uppercase tracking-widest rounded-sm border border-black/20 shadow-lg">New</div>
+                    <div className="absolute inset-0 bg-[#1c1917] flex items-center justify-center p-4 text-center z-0">
+                      <span className="text-[#f4ebd8] font-serif italic text-xl px-2 leading-tight drop-shadow-md">{product.title}</span>
+                    </div>
                     <img
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 relative z-10 bg-transparent"
                       alt={product.title}
                       src={product.images[0]}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <button

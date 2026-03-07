@@ -19,10 +19,10 @@ export default function CartDrawer() {
                 className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-surface-dark border-l border-border-dark shadow-2xl z-[100] transform transition-transform duration-500 ease-in-out ${isCartOpen ? "translate-x-0" : "translate-x-full"}`}
             >
                 <div
-                    className="absolute -left-12 top-1/2 -translate-y-1/2 bg-primary py-4 px-2 rounded-l-xl cursor-pointer shadow-lg"
+                    className="absolute -left-12 top-1/2 -translate-y-1/2 bg-[#4a1c1c] text-[#f4ebd8] py-4 px-2 rounded-l-xl cursor-pointer shadow-lg"
                     onClick={toggleCart}
                 >
-                    <span className="material-symbols-outlined text-background-dark rotate-180">
+                    <span className="material-symbols-outlined rotate-180">
                         double_arrow
                     </span>
                 </div>
