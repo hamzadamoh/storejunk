@@ -1,13 +1,31 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useProducts } from "@/context/ProductContext";
+import { useProducts, Product } from "@/context/ProductContext";
 import { useCart } from "@/context/CartContext";
+import FallbackImage from "@/components/FallbackImage";
 
 export default function CollectionProductGrid({ slug }: { slug: string }) {
     const { getProductsByCollection } = useProducts();
     const { addToCart } = useCart();
-    const categoryProducts = getProductsByCollection(slug);
+    const [categoryProducts, setCategoryProducts] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        let isMounted = true;
+        getProductsByCollection(slug).then((data) => {
+            if (isMounted) {
+                setCategoryProducts(data);
+                setIsLoading(false);
+            }
+        });
+        return () => { isMounted = false; };
+    }, [slug, getProductsByCollection]);
+
+    if (isLoading) {
+        return <div className="col-span-full text-center py-20 text-stone-500">Loading products...</div>;
+    }
 
     if (categoryProducts.length === 0) {
         return (
@@ -22,10 +40,11 @@ export default function CollectionProductGrid({ slug }: { slug: string }) {
             {categoryProducts.map((product) => (
                 <div key={product.id} className="group space-y-4">
                     <Link href={`/product/${product.id}`} className="block relative overflow-hidden rounded-xl bg-white dark:bg-stone-800 shadow-xl aspect-square">
-                        <img
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        <FallbackImage
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 relative z-10"
                             alt={product.title}
-                            src={product.images[0]}
+                            title={product.title}
+                            src={product.images?.[0]}
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                             <button

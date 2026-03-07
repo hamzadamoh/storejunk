@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useProducts } from "@/context/ProductContext";
 import { useCart } from "@/context/CartContext";
 import { useParams, useRouter } from "next/navigation";
+import FallbackImage from "@/components/FallbackImage";
 
 export default function DynamicProductPage() {
     const { getProductById } = useProducts();
@@ -34,11 +35,12 @@ export default function DynamicProductPage() {
 
     useEffect(() => {
         if (id) {
-            const p = getProductById(id);
-            if (p) {
-                setProduct(p);
-                setSelectedImage(p.images[0]);
-            }
+            getProductById(id).then((p) => {
+                if (p) {
+                    setProduct(p);
+                    setSelectedImage(p.images[0]);
+                }
+            });
         }
     }, [id, getProductById]);
 
@@ -99,9 +101,10 @@ export default function DynamicProductPage() {
                                 <div className="absolute top-4 left-4 z-10 bg-[#4a1c1c] text-[#f4ebd8] px-3 py-1 text-xs font-serif font-bold uppercase tracking-widest rounded-sm border border-black/20 shadow-lg">
                                     Bestseller
                                 </div>
-                                <img
+                                <FallbackImage
                                     src={selectedImage}
                                     alt={product.title}
+                                    title={product.title}
                                     className="w-full h-auto max-h-[80vh] object-contain transition-transform duration-700 group-hover:scale-105"
                                 />
                             </div>
@@ -114,10 +117,12 @@ export default function DynamicProductPage() {
                                     onClick={() => setSelectedImage(url)}
                                     className={`w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-neutral-dark rounded-lg overflow-hidden border cursor-pointer transition-all hover:border-primary/50 ${selectedImage === url ? "border-primary" : "border-border-gold"}`}
                                 >
-                                    <div
-                                        className="w-full h-full bg-center bg-cover"
-                                        style={{ backgroundImage: `url('${url}')` }}
-                                    ></div>
+                                    <FallbackImage
+                                        src={url}
+                                        alt={`${product.title} thumbnail ${i + 1}`}
+                                        title={product.title}
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
                             ))}
                         </div>

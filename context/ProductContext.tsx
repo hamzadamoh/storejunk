@@ -1,148 +1,77 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/lib/supabase";
 
 export type Product = {
     id: string;
     title: string;
+    full_title?: string;
     price: number;
     type: string;
-    images: string[]; // Changed from img: string
+    images: string[];
     collectionId: string;
     description?: string;
-    fileUrl?: string;
+    sku?: string;
+    tags?: string[];
 };
 
 type ProductContextType = {
     products: Product[];
+    isLoading: boolean;
+    error: string | null;
     addProduct: (product: Product) => void;
     deleteProduct: (id: string) => void;
-    getProductsByCollection: (collectionId: string) => Product[];
-    getProductById: (id: string) => Product | undefined; // Added helper
+    getProductsByCollection: (collectionId: string) => Promise<Product[]>;
+    getProductById: (id: string) => Promise<Product | undefined>;
 };
-
-const initialProducts: Product[] = [
-    // Gothic Noir
-    {
-        id: "midnight-ledger",
-        title: "The Midnight Ledger",
-        price: 12.50,
-        type: "Digital Kit",
-        images: [
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuBSSMhJwAKOLgI8LjcxOIZQa5-8WoNWLRtjgJoVZZwUoVR2zPv1XsL5FlTkdWcteWL6XuYNWa9tisbmyjvj2ljFqierAZzWfiW0NtvJOhWT1A1dKJ9Q2kj8Wy9X6UfbAStMkLAYFGQFSqBUJblnt_OvN4AMRaI5rkUNXfyVsHWQ6pp2O-y6_W5Z4fysky9aYyWdpLFDY_XffolkH0RwjVf5HiVZZibP24lqy974CHrXwunUaI24TDEEzSxtSGoZ7_SqzKZG94yqQTUi"
-        ],
-        collectionId: "gothic-noir",
-        description: "A mysterious collection of dark ledger pages, perfect for adding a touch of financial intrigue to your gothic journals."
-    },
-    {
-        id: "witchwood-textures",
-        title: "Witchwood Textures",
-        price: 9.00,
-        type: "Texture Pack",
-        images: [
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuAC85fD809gP2kLa9-_c9m1sFopYK56CD8ActQqv3hB3RKPQlGLFtr55s6Q0gX0ZuvSJ3zfuuVD1M4xv-WcNvccL8ZYcHOeSg0hgWcUouHZfwft3U9HCRWWi-NueTF_gXqAbfaTg5OQU-yLAqw5__QO1PBrKalQAS-Rsqk5J54mpQrVAS_G9MwrXpgENvUrBYXZPL-jd0JgizVS68Mwt5SCvdK-K5bHPvtxiuwRO3BxLZelmGO76NKsndgQ0vvJ_0O9RvFON4nEhat0"
-        ],
-        collectionId: "gothic-noir",
-        description: "High-contrast woods and bark textures collected from the deepest parts of the ancient forest."
-    },
-    // Victorian Ephemera
-    {
-        id: "gilded-parchment",
-        title: "Gilded Parchment",
-        price: 15.00,
-        type: "Texture Pack",
-        images: [
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuAjCDV7VlOVKsPAh6jwpWSa8NyaZ0ULKuDOn-ubQcFagLwKcnkrD0ntosoVSKrsn1aGmHFYuJl-IvPvTAn1sYcYqzRyOKwAS4q79sf4fC_FdTAfrDQPF5pcZvurYTbdSQRH0Bl4zAlzrjKkudizFFyDWSI4Edzt5G6AdpWdQEmS8z4PQQG96VebhEAR7xYS7HgrwTYxwyNLcU1wY7pHpdr1_-ANerSMxhgGDghe_QZqhUIgX7boLOAMcRbO1WYuuF8k0QUOzwu6LUbc"
-        ],
-        collectionId: "victorian-ephemera",
-        description: "Luxurious parchment backgrounds with faux gold foil edges. Ideal for elegant invitations and vintage letters."
-    },
-    // Botanical Grimoires
-    {
-        id: "botanical-grimoire",
-        title: "Botanical Grimoire",
-        price: 14.00,
-        type: "Digital Kit",
-        images: [
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuA-6O_O1XnvGArSIO_cuyOQOQ39vJ6y55tF2A7Y6wF2t9h1j44u5H9Hq9yQ3Q5tJ9Q7y5H9Hq9yQ3Q5tJ9Q7y5H9Hq9yQ3Q5tJ9Q7y5H9Hq9yQ3Q5tJ9Q7y5H9Hq9yQ3Q5tJ9Q7y5H9Hq9yQ3Q5tJ9",
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuBweIzw8GCv3L1gyjwoQTeTopIEraFAy8MbkphRTqR0t3cCqfHH3uH-IaIzXLdN7FQY5bSeyaK5KWXq2Z4lJZXKxFsOSNsPiPfTqgmUByr_4ISwM_qmVrY9CKKu0ImrX-WiPhFobxJc0M4jqsaTGIoUX3yRfC3VHALWqzWTAgOwBUVvn6rtg9JNgvmDGIPSScjF5T9wTtL9F_whH9vLIeO7rwD86-tjQy5Eh96dAAl04_Y24eDcbVacMbDALt--IVjM2El6lRr7a7c5",
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuAs8P4m1sHko48mgbQmoKdYtPC7G_0z5tcEnD5nzour2UGRlxkVWX_p3bishleKxUPO_EH_8eO415L-Z9kx7k3KJV9G6TRRuCw50otv2o_UTCwhWkdCcowAvrzuyXcFDuXB_PEq7DBxjhbw2qRlXwtE0FiV9e70ZoOt8hbMUGVfvSQxpCXHbd6PWDNg2KLJDKRpQKEyWYi3xVARee5KGxPv8NrQsr_vPk186lNRB6d9UjpkXv-anVJVYjdUGem7hJySY3Fb0Mz9Eb7I"
-        ],
-        collectionId: "botanical-grimoires",
-        description: "A comprehensive kit featuring herbarium pages, pressed flowers, and secret garden notes."
-    },
-    {
-        id: "celestial-grimoire",
-        title: "Celestial Grimoire Kit",
-        price: 18.99,
-        type: "Bundle: Pages & Ephemera",
-        images: [
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuD3TVlQ4VrIl17ygKpXxo_ned8QkGQ2kvhlNCDNtFtICEXPCEr4PGcKZIen3fn6VCWSaoco9Eb1vVH--a7rQLtQuMxn5KUkOejGejm8TstZrOF0eVf6VD9WZGwuCBwm2LpkLw0zSyMluDTSGXgIYlbI13hXjvUWRSIUrfeJ91UpeEpd8teGSJUwKYi6sZwHUjN75ldEAu12PDNSIYdQo4FL39rdQ03V3tohvxLTS-ll6tDrYbVewgUswq0nzSaMJ7lwj8v48aodv823"
-        ],
-        collectionId: "botanical-grimoires",
-        description: "Map the stars with this celestial set. Includes star charts, moon phases, and cosmic textures."
-    }
-];
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export function ProductProvider({ children }: { children: ReactNode }) {
     const [products, setProducts] = useState<Product[]>([]);
-    const [isLoaded, setIsLoaded] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Load from API on mount
     useEffect(() => {
         async function fetchProducts() {
             try {
-                const res = await fetch('/api/products');
-                if (res.ok) {
-                    const data = await res.json();
-                    // Postgres returns DECIMAL as string, so we need to cast it
-                    const formattedDetails = data.map((p: any) => ({
-                        ...p,
-                        price: Number(p.price)
-                    }));
-                    setProducts(formattedDetails);
+                setIsLoading(true);
+                const { data, error } = await supabase
+                    .from('products')
+                    .select('*');
+
+                if (error) {
+                    throw error;
                 }
-            } catch (error) {
-                console.error("Failed to fetch products", error);
+
+                if (data) {
+                    const formattedProducts: Product[] = data.map((p: any) => ({
+                        id: p.id,
+                        title: p.title,
+                        full_title: p.full_title,
+                        price: Number(p.price),
+                        type: p.type,
+                        images: p.images || [],
+                        collectionId: p.collection,
+                        description: p.description,
+                        sku: p.sku,
+                        tags: p.tags || []
+                    }));
+                    setProducts(formattedProducts);
+                }
+            } catch (err: any) {
+                console.error("Failed to fetch products from Supabase", err);
+                setError(err.message || "Failed to load products");
             } finally {
-                setIsLoaded(true);
+                setIsLoading(false);
             }
         }
         fetchProducts();
     }, []);
 
     const addProduct = async (product: Product) => {
-        // Optimistic update
-        setProducts((prev) => [product, ...prev]);
-
-        try {
-            const res = await fetch('/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: product.id,
-                    title: product.title,
-                    price: product.price,
-                    type: product.type,
-                    images: product.images,
-                    collection_id: product.collectionId, // API expects snake_case
-                    description: product.description,
-                    file_url: product.fileUrl
-                }),
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.details || errorData.error || "Failed to persist product");
-            }
-        } catch (error) {
-            console.error("Failed to add product", error);
-            // Revert on failure
-            setProducts((prev) => prev.filter(p => p.id !== product.id));
-            throw error;
-        }
+        console.warn("addProduct not fully implemented for Supabase direct insert yet in this context");
     };
 
     const deleteProduct = (id: string) => {
@@ -150,16 +79,52 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         // TODO: Add API Delete endpoint if needed
     };
 
-    const getProductsByCollection = (collectionId: string) => {
-        return products.filter((p) => p.collectionId === collectionId); // Note: PG returns snake_case usually, need to check mapping
+    const getProductsByCollection = async (collectionId: string) => {
+        try {
+            const { data, error } = await supabase.from('products').select('*').eq('collection', collectionId);
+            if (error) throw error;
+            return data.map((p: any) => ({
+                id: p.id,
+                title: p.title,
+                full_title: p.full_title,
+                price: Number(p.price),
+                type: p.type,
+                images: p.images || [],
+                collectionId: p.collection,
+                description: p.description,
+                sku: p.sku,
+                tags: p.tags || []
+            })) as Product[];
+        } catch (err) {
+            console.error("Failed to fetch products by collection", err);
+            return [];
+        }
     };
 
-    const getProductById = (id: string) => {
-        return products.find(p => p.id === id);
+    const getProductById = async (id: string) => {
+        try {
+            const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
+            if (error) throw error;
+            return {
+                id: data.id,
+                title: data.title,
+                full_title: data.full_title,
+                price: Number(data.price),
+                type: data.type,
+                images: data.images || [],
+                collectionId: data.collection,
+                description: data.description,
+                sku: data.sku,
+                tags: data.tags || []
+            } as Product;
+        } catch (err) {
+            console.error("Failed to fetch product by id", err);
+            return undefined;
+        }
     }
 
     return (
-        <ProductContext.Provider value={{ products, addProduct, deleteProduct, getProductsByCollection, getProductById }}>
+        <ProductContext.Provider value={{ products, isLoading, error, addProduct, deleteProduct, getProductsByCollection, getProductById }}>
             {children}
         </ProductContext.Provider>
     );

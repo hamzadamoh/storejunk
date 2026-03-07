@@ -5,10 +5,13 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useState } from "react";
 import { useProducts } from "@/context/ProductContext";
+import { useCollections } from "@/context/CollectionContext";
 import { useCart } from "@/context/CartContext";
+import FallbackImage from "@/components/FallbackImage";
 
 export default function Home() {
-  const { products } = useProducts();
+  const { products, isLoading: productsLoading, error: productsError } = useProducts();
+  const { collections } = useCollections();
   const { addToCart } = useCart();
   const newArrivals = [...products].reverse().slice(0, 4); // Get last 4 products as new arrivals
 
@@ -161,72 +164,21 @@ export default function Home() {
                 historical era.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Collection 1 */}
-              {/* Collection 1 */}
-              <Link href="/collections/gothic-noir" className="group relative overflow-hidden bg-charcoal rounded-xl aspect-[3/4] cursor-pointer block">
-                <img
-                  className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500 grayscale group-hover:grayscale-0"
-                  alt="Dark gothic aesthetic with lace and candles"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhkpEyBUsuL0v4i0q-_bsdQHvtK85z2OHdy4JhQATRUtQCCzLh2Mz385d9O4EznGPS_k4xV_3xWtRPUBokEYRuBQQBXcj5d8yOva8K3NjPUkZy6WTHCPnrG5Q4Fywyw_ztmXaXm56sKvYpefF4qe1JceCb4Xi2j7S9nhJuK-DPeFfQUt3FcYmjRcFst7MQtPvYmDINsnLneMfk8sW4P8yTUJ4mfHkyigbZcCaCt3KcRS9RKZgXV1rtnVqU0Cf21ALKDDCMxWdW2QMF"
-                />
-                <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                  <h3 className="font-serif text-3xl font-bold text-white mb-2 italic">
-                    Gothic Noir
-                  </h3>
-                  <p className="text-stone-300 text-sm mb-6 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-300">
-                    Deep shadows, weathered textures, and Victorian mystery.
-                  </p>
-                  <span className="text-primary font-bold flex items-center gap-2 group-hover:gap-4 transition-all">
-                    Explore Collection{" "}
-                    <span className="material-symbols-outlined">
-                      trending_flat
-                    </span>
-                  </span>
-                </div>
-                <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-white text-[10px] tracking-widest uppercase">
-                  74 Items
-                </div>
-              </Link>
-              {/* Collection 2 */}
-              <Link href="/collections/victorian-ephemera" className="group relative overflow-hidden bg-stone-800 rounded-xl aspect-[3/4] cursor-pointer block">
-                <img
-                  className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500 grayscale group-hover:grayscale-0"
-                  alt="Victorian letters and vintage postage stamps"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEeciNi-E9j6cBXIcX5t_vSYYqaUx4xOS6h6cDpT72hL5WPOHu-e9KdiN8mPEPSP9-rJFpEouBareTwFAHBm27U9v7H_kzyDhR0t4f6CQ2h-cWG-mhVC5akscMWvXIAa-7SByxFK3AJWX4KwSXl7gVuzr_6CS6ZDKNiioPOK-40OqSSLQU7V-QLNj4NHFseTwxjvCYdNOTM8tjMNCHE00GBOlXWNFAmqrVM5LwNDr78briLlem-3rWHNaQvS4CfSETaqmHDLi7AHFG"
-                />
-                <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                  <h3 className="font-serif text-3xl font-bold text-white mb-2 italic">
-                    Victorian Ephemera
-                  </h3>
-                  <p className="text-stone-300 text-sm mb-6 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-300">
-                    Aged parchment, vintage letters, and gilded details.
-                  </p>
-                  <span className="text-primary font-bold flex items-center gap-2 group-hover:gap-4 transition-all">
-                    Explore Collection{" "}
-                    <span className="material-symbols-outlined">
-                      trending_flat
-                    </span>
-                  </span>
-                </div>
-                <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-white text-[10px] tracking-widest uppercase">
-                  120 Items
-                </div>
-              </Link>
-              {/* Collection 3 */}
-              <div className="group relative overflow-hidden bg-stone-900 rounded-xl aspect-[3/4] cursor-pointer">
-                <Link href="/collections/botanical-grimoires">
-                  <img
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {collections.map((collection) => (
+                <Link key={collection.id} href={`/collections/${collection.id}`} className="group relative overflow-hidden bg-stone-900 rounded-xl aspect-[4/3] sm:aspect-[3/4] cursor-pointer block">
+                  <FallbackImage
                     className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500 grayscale group-hover:grayscale-0"
-                    alt="Dried herbs and botanical illustrations"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpIGtkNEZrJkq_lUZ_op8cstVgXFPtA-LY-aM3Puzran46FD-jW7C6lM83fxXT_5UDG8OESAvBQXMAHMRvVNw1fXxHQoAXHxqky6QRbGmQ3bsdAXsXYcHwTlviafpyl5xRODMZm5NuRm5kFWjI4gCo9xruI1CQQEJPGfr0_l0soRTlKNu-j-vBJ8EAeCKWVARLijGcjdWOLFX266_uqunhD6rLF899DLhXRZr4TB6TUMcBZu5AUoUAQDmWVwCT_6SEi5X4YNy8DuKt"
+                    alt={collection.title}
+                    title={collection.title}
+                    src={collection.heroImage}
                   />
                   <div className="absolute inset-0 p-8 flex flex-col justify-end">
                     <h3 className="font-serif text-3xl font-bold text-white mb-2 italic">
-                      Botanical Grimoires
+                      {collection.title}
                     </h3>
                     <p className="text-stone-300 text-sm mb-6 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-300">
-                      Pressed flowers, herbal sketches, and earthy tones.
+                      {collection.description}
                     </p>
                     <span className="text-primary font-bold flex items-center gap-2 group-hover:gap-4 transition-all">
                       Explore Collection{" "}
@@ -235,11 +187,8 @@ export default function Home() {
                       </span>
                     </span>
                   </div>
-                  <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-white text-[10px] tracking-widest uppercase">
-                    56 Items
-                  </div>
                 </Link>
-              </div>
+              ))}
             </div>
           </div>
         </section>
@@ -298,16 +247,11 @@ export default function Home() {
                 <div key={product.id} className="group space-y-4">
                   <Link href={`/product/${product.id}`} className="block relative overflow-hidden rounded-xl bg-white dark:bg-stone-800 shadow-xl aspect-square">
                     <div className="absolute top-3 left-3 z-10 bg-[#4a1c1c] text-[#f4ebd8] px-2 py-0.5 text-[10px] font-serif font-bold uppercase tracking-widest rounded-sm border border-black/20 shadow-lg">New</div>
-                    <div className="absolute inset-0 bg-[#1c1917] flex items-center justify-center p-4 text-center z-0">
-                      <span className="text-[#f4ebd8] font-serif italic text-xl px-2 leading-tight drop-shadow-md">{product.title}</span>
-                    </div>
-                    <img
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 relative z-10 bg-transparent"
+                    <FallbackImage
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 relative z-10"
                       alt={product.title}
-                      src={product.images[0]}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
+                      title={product.title}
+                      src={product.images?.[0]}
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <button
