@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useProducts } from "./ProductContext";
 
 export type Collection = {
     id: string; // "gothic-noir"
@@ -34,11 +35,22 @@ export function CollectionProvider({ children }: { children: ReactNode }) {
     const [collections, setCollections] = useState<Collection[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
+    const { getCollectionHeroImage } = useProducts();
+
     useEffect(() => {
-        // Mock API call to load initial collections directly
-        setCollections(initialCollections);
-        setIsLoaded(true);
-    }, []);
+        const loadCollections = async () => {
+            const updatedCollections = await Promise.all(
+                initialCollections.map(async (col) => {
+                    const heroImage = await getCollectionHeroImage(col.id);
+                    return { ...col, heroImage: heroImage || "" };
+                })
+            );
+            setCollections(updatedCollections);
+            setIsLoaded(true);
+        };
+
+        loadCollections();
+    }, [getCollectionHeroImage]);
 
     const addCollection = async (collection: Collection) => {
         setCollections((prev) => [...prev, collection]);

@@ -26,6 +26,7 @@ type ProductContextType = {
     deleteProduct: (id: string) => void;
     getProductsByCollection: (collectionId: string, page?: number) => Promise<{ products: Product[], hasMore: boolean }>;
     getProductById: (id: string) => Promise<Product | undefined>;
+    getCollectionHeroImage: (collectionId: string) => Promise<string | null>;
 };
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -49,7 +50,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
             const { data, error, count } = await supabase
                 .from('products')
-                .select('id, title, price, collection, type, images:images[1]', { count: 'exact' })
+                .select('id, title, price, collection, type, images', { count: 'exact' })
                 .order('created_at', { ascending: false })
                 .range(start, end);
 
@@ -117,7 +118,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
             const { data, error, count } = await supabase
                 .from('products')
-                .select('id, title, price, collection, type, images:images[1]', { count: 'exact' })
+                .select('id, title, price, collection, type, images', { count: 'exact' })
                 .eq('collection', collectionId)
                 .order('created_at', { ascending: false })
                 .range(start, end);
@@ -196,8 +197,27 @@ export function ProductProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    const getCollectionHeroImage = async (collectionId: string): Promise<string | null> => {
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .select('images')
+                .eq('collection', collectionId)
+                .limit(1);
+
+            if (error) throw error;
+            if (data && data.length > 0) {
+                return data[0].images?.[0] || null;
+            }
+            return null;
+        } catch (err) {
+            console.error(`Failed to fetch hero image for collection ${collectionId}`, err);
+            return null;
+        }
+    }
+
     return (
-        <ProductContext.Provider value={{ products, isLoading, error, hasMore, loadMore, addProduct, deleteProduct, getProductsByCollection, getProductById }}>
+        <ProductContext.Provider value={{ products, isLoading, error, hasMore, loadMore, addProduct, deleteProduct, getProductsByCollection, getProductById, getCollectionHeroImage }}>
             {children}
         </ProductContext.Provider>
     );
