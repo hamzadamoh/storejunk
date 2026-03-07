@@ -30,13 +30,18 @@ export default function Footer() {
                     </h4>
                     <ul className="space-y-4 text-sm">
                         <li>
-                            <Link href="/product/botanical-grimoire" className="hover:text-primary transition-colors">
+                            <Link href="/shop" className="hover:text-primary transition-colors">
                                 Digital Paper Packs
                             </Link>
                         </li>
                         <li>
-                            <Link href="/product/botanical-grimoire" className="hover:text-primary transition-colors">
+                            <Link href="/shop" className="hover:text-primary transition-colors">
                                 Ephemera Kits
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/journal" className="hover:text-primary transition-colors">
+                                The Journal
                             </Link>
                         </li>
                         <li>
