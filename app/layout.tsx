@@ -6,6 +6,7 @@ import { ProductProvider } from "@/context/ProductContext";
 import { CollectionProvider } from "@/context/CollectionContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { OrderProvider } from "@/context/OrderContext";
+import { JournalProvider } from "@/context/JournalProvider";
 import CartDrawer from "@/components/CartDrawer";
 
 const inter = Inter({
@@ -47,8 +48,10 @@ export default function RootLayout({
             <CartProvider>
               <SettingsProvider>
                 <OrderProvider>
-                  {children}
-                  <CartDrawer />
+                  <JournalProvider>
+                    {children}
+                    <CartDrawer />
+                  </JournalProvider>
                 </OrderProvider>
               </SettingsProvider>
             </CartProvider>
