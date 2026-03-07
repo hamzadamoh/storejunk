@@ -52,6 +52,7 @@ export default function ArticleDetailPage() {
                     <FallbackImage
                         src={article.image_url}
                         alt={article.title}
+                        title={article.title}
                         className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-6 text-center">

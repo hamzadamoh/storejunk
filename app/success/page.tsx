@@ -82,6 +82,7 @@ function SuccessContent() {
                                                 <FallbackImage
                                                     src={product.images?.[0]}
                                                     alt={product.title}
+                                                    title={product.title}
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
