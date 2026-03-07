@@ -2,9 +2,26 @@
 
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function CartDrawer() {
     const { isCartOpen, toggleCart, cartItems, addToCart, removeFromCart, cartTotal } = useCart();
+    const [testMode, setTestMode] = useState(false);
+
+    useEffect(() => {
+        async function checkTestMode() {
+            const { data } = await supabase.from('site_settings').select('test_mode').eq('id', 'global').single();
+            if (data) setTestMode(data.test_mode);
+        }
+        if (isCartOpen) checkTestMode();
+    }, [isCartOpen]);
+
+    const handleTestCheckout = () => {
+        const productIds = cartItems.map(item => item.id).join(',');
+        window.location.href = `/success?ids=${productIds}`;
+        toggleCart();
+    };
 
     return (
         <>
@@ -135,6 +152,16 @@ export default function CartDrawer() {
                                 Proceed to Checkout
                                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
                             </Link>
+
+                            {testMode && (
+                                <button
+                                    onClick={handleTestCheckout}
+                                    className="w-full py-3 bg-stone-800 hover:bg-stone-700 text-primary border border-primary/50 font-bold uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-sm">bug_report</span>
+                                    Test Checkout (Bypass)
+                                </button>
+                            )}
 
                             {/* Trust Badges */}
                             <div className="flex items-center justify-center gap-2 text-[10px] font-serif italic text-stone-500 pt-2">

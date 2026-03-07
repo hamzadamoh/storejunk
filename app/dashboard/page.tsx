@@ -33,6 +33,7 @@ export default function DashboardOverview() {
     const [recentOrders, setRecentOrders] = useState<Order[]>([]);
     const [topProducts, setTopProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [testMode, setTestMode] = useState(false);
 
     useEffect(() => {
         async function fetchDashboardData() {
@@ -114,6 +115,12 @@ export default function DashboardOverview() {
                 }));
                 setChartData(formattedChartData);
 
+                // Fetch Site Settings
+                const { data: settings } = await supabase.from('site_settings').select('test_mode').eq('id', 'global').single();
+                if (settings) {
+                    setTestMode(settings.test_mode);
+                }
+
             } catch (err) {
                 console.error("Dashboard fetch error:", err);
             } finally {
@@ -124,13 +131,40 @@ export default function DashboardOverview() {
         fetchDashboardData();
     }, []);
 
+    const toggleTestMode = async () => {
+        const newState = !testMode;
+        setTestMode(newState);
+        try {
+            const { error } = await supabase.from('site_settings').upsert([{ id: 'global', test_mode: newState }]);
+            if (error) throw error;
+        } catch (err) {
+            console.error("Failed to update test mode:", err);
+            setTestMode(!newState); // revert on error
+        }
+    };
+
     if (loading) {
         return <div className="text-stone-500 animate-pulse">Loading overview data...</div>;
     }
 
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-serif font-bold text-white mb-6">Overview</h1>
+            <div className="flex items-center justify-between gap-4 mb-6">
+                <h1 className="text-3xl font-serif font-bold text-white">Overview</h1>
+
+                {/* Test Mode Toggle */}
+                <div className="flex items-center gap-3 bg-[#1a1a1a] p-2 pr-4 rounded-xl border border-stone-800">
+                    <button
+                        onClick={toggleTestMode}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${testMode ? 'bg-[#e6b319]' : 'bg-stone-700'}`}
+                    >
+                        <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${testMode ? 'translate-x-6' : ''}`}></div>
+                    </button>
+                    <span className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                        Payment Test Mode: <span className={testMode ? 'text-[#e6b319]' : 'text-stone-600'}>{testMode ? 'ON' : 'OFF'}</span>
+                    </span>
+                </div>
+            </div>
 
             {/* Stat Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

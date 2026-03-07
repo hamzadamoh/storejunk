@@ -44,6 +44,9 @@ function SuccessContent() {
 
     return (
         <main className="flex-grow px-6 py-24 relative overflow-hidden">
+            {/* Texture Overlay */}
+            <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+
             {/* Dark Gothic Accents */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
 
