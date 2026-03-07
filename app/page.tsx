@@ -3,6 +3,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import { useState } from "react";
 import { useProducts } from "@/context/ProductContext";
 import { useCart } from "@/context/CartContext";
 
@@ -10,6 +11,30 @@ export default function Home() {
   const { products } = useProducts();
   const { addToCart } = useCart();
   const newArrivals = [...products].reverse().slice(0, 4); // Get last 4 products as new arrivals
+
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+        headers: { "Content-Type": "application/json" }
+      });
+      if (res.ok) {
+        setStatus("success");
+        setEmail("");
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
+  };
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-charcoal dark:text-stone-200 font-display transition-colors duration-300">
@@ -86,6 +111,37 @@ export default function Home() {
                   </div>
                 </Link>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* As Featured In */}
+        <section className="py-8 border-b border-stone-200 dark:border-white/5 bg-stone-100 dark:bg-stone-900 text-center px-6">
+          <p className="text-stone-500 font-serif italic text-sm mb-6">As featured in</p>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+            <span className="font-serif font-bold text-xl text-stone-400 dark:text-stone-300">Journaler's Digest</span>
+            <span className="font-serif font-bold text-xl text-stone-400 dark:text-stone-300">Victorian Times</span>
+            <span className="font-serif font-bold text-xl text-stone-400 dark:text-stone-300">Gothic Aesthetic</span>
+            <span className="font-serif font-bold text-xl text-stone-400 dark:text-stone-300">The Daily Crafter</span>
+          </div>
+        </section>
+
+        {/* Social Proof Strip */}
+        <section className="py-8 bg-[#f4ebd8] dark:bg-stone-800 text-charcoal dark:text-stone-300 border-y border-stone-300 dark:border-stone-700">
+          <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-12 font-serif text-lg md:text-xl text-center">
+            <div className="flex items-center gap-3">
+              <span className="text-primary font-bold text-2xl">4,800+</span>
+              <span className="italic">happy journalers</span>
+            </div>
+            <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-primary/50"></div>
+            <div className="flex items-center gap-2">
+              <span className="text-primary font-bold text-2xl">5★</span>
+              <span className="italic">average rating</span>
+            </div>
+            <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-primary/50"></div>
+            <div className="flex items-center gap-3">
+              <span className="text-primary font-bold text-2xl">250+</span>
+              <span className="italic">digital kits</span>
             </div>
           </div>
         </section>
@@ -188,6 +244,41 @@ export default function Home() {
           </div>
         </section>
 
+        {/* How It Works Section */}
+        <section className="py-24 px-6 lg:px-20 bg-stone-50 dark:bg-stone-900/50 border-t border-stone-200 dark:border-stone-800">
+          <div className="max-w-7xl mx-auto text-center space-y-16">
+            <div className="space-y-4">
+              <h2 className="font-serif text-4xl md:text-5xl font-black text-charcoal dark:text-white">
+                How It Works
+              </h2>
+              <p className="text-stone-500 italic max-w-xl mx-auto font-medium">
+                No waiting. Your files arrive the second you checkout.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 md:gap-8 relative">
+              {/* Add decorative connecting line behind steps for md+ screens */}
+              <div className="hidden md:block absolute top-[28px] left-[10%] right-[10%] h-[1px] bg-stone-300 dark:bg-stone-700 z-0"></div>
+
+              {[
+                { num: "1", title: "Browse & Buy", icon: "shopping_basket" },
+                { num: "2", title: "Instant Download", icon: "cloud_download" },
+                { num: "3", title: "Print at Home", icon: "print" },
+                { num: "4", title: "Create & Journal", icon: "auto_stories" },
+              ].map((step) => (
+                <div key={step.num} className="relative z-10 flex flex-col items-center gap-5">
+                  <div className="w-14 h-14 rounded-full bg-[#f4ebd8] dark:bg-stone-800 border-2 border-primary flex items-center justify-center text-primary font-serif text-2xl font-bold shadow-md">
+                    {step.num}
+                  </div>
+                  <h3 className="font-bold text-xl text-charcoal dark:text-stone-200">{step.title}</h3>
+                  <span className="material-symbols-outlined text-primary/40 dark:text-primary/20 text-4xl">
+                    {step.icon}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* New Arrivals Product Grid */}
         <section className="py-24 px-6 lg:px-20 bg-stone-100 dark:bg-charcoal/50">
           <div className="max-w-7xl mx-auto">
@@ -206,6 +297,7 @@ export default function Home() {
               {newArrivals.map((product) => (
                 <div key={product.id} className="group space-y-4">
                   <Link href={`/product/${product.id}`} className="block relative overflow-hidden rounded-xl bg-white dark:bg-stone-800 shadow-xl aspect-square">
+                    <div className="absolute top-3 left-3 z-10 bg-[#4a1c1c] text-[#f4ebd8] px-2 py-0.5 text-[10px] font-serif font-bold uppercase tracking-widest rounded-sm border border-black/20 shadow-lg">New</div>
                     <img
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       alt={product.title}
@@ -241,7 +333,10 @@ export default function Home() {
                       <h3 className="font-bold text-lg dark:text-stone-200 line-clamp-1">
                         {product.title}
                       </h3>
-                      <span className="text-primary font-bold">${product.price.toFixed(2)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary font-bold">${product.price.toFixed(2)}</span>
+                        <span className="text-stone-500 text-xs line-through font-serif italic">${(product.price * 1.42).toFixed(2)}</span>
+                      </div>
                     </div>
                     <p className="text-stone-500 text-sm">
                       {product.type}
@@ -276,6 +371,48 @@ export default function Home() {
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfjz1dKOmIoCREWPCnWao4v6Z2g-v7t0Wg8fErPf4zRS1Q5HqxUrwfo_WJ_spjxrAmv-NzBuYTN2Q1ht_2K4u6StquB4BHoVrgIYz7VAe3EwOsox3KfPH17Err7pL3_MSfCZkuSeP1uz_m5L-NjoeqgqGXb5DBfK16p_bW7WNOOpOwaMjew-wnI44Z5FcRETccbsWIhurTP5idjeKXAdYO75zWH9Pky5aMaPoY1vOI3lzSYyI2apI5AtAUq0Uerf3D-9Nt_Kzv25L7"
               />
             </div>
+          </div>
+        </section>
+
+        {/* Newsletter Signup Section */}
+        <section className="py-32 px-6 relative bg-charcoal overflow-hidden border-t-2 border-primary/20">
+          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCpIGtkNEZrJkq_lUZ_op8cstVgXFPtA-LY-aM3Puzran46FD-jW7C6lM83fxXT_5UDG8OESAvBQXMAHMRvVNw1fXxHQoAXHxqky6QRbGmQ3bsdAXsXYcHwTlviafpyl5xRODMZm5NuRm5kFWjI4gCo9xruI1CQQEJPGfr0_l0soRTlKNu-j-vBJ8EAeCKWVARLijGcjdWOLFX266_uqunhD6rLF899DLhXRZr4TB6TUMcBZu5AUoUAQDmWVwCT_6SEi5X4YNy8DuKt')" }}></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-charcoal/80 to-transparent"></div>
+
+          <div className="relative z-10 max-w-3xl mx-auto text-center space-y-10">
+            <div className="space-y-6">
+              <h2 className="font-serif text-5xl md:text-6xl font-black text-white italic drop-shadow-xl">
+                Join the Inner Circle
+              </h2>
+              <p className="text-stone-300 text-xl font-medium">
+                Get a <span className="text-primary font-bold">FREE Gothic Noir kit</span> + early access to new drops
+              </p>
+            </div>
+
+            <form className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto pt-4" onSubmit={handleSubscribe}>
+              <input
+                type="email"
+                placeholder="Enter your raven address..."
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                disabled={status === "loading" || status === "success"}
+                className="flex-1 bg-white/5 border border-white/20 text-white rounded-xl px-6 py-4 outline-none focus:border-primary focus:bg-white/10 transition-all font-medium placeholder:text-stone-500 disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={status === "loading" || status === "success"}
+                className="bg-primary hover:bg-white text-charcoal font-bold px-10 py-4 rounded-xl shadow-[0_0_20px_rgba(230,179,25,0.4)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] transition-all uppercase tracking-widest text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {status === "loading" ? "Sending..." : status === "success" ? "Subscribed!" : "Claim My Freebie"}
+              </button>
+            </form>
+            {status === "success" && (
+              <p className="text-primary font-bold mt-2 font-serif italic">Welcome to the inner circle. Your freebie is on its way!</p>
+            )}
+            {status === "error" && (
+              <p className="text-red-400 font-bold mt-2 font-serif italic">The raven lost your letter. Please try again.</p>
+            )}
           </div>
         </section>
       </main>
