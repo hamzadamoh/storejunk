@@ -39,7 +39,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                 setIsLoading(true);
                 const { data, error } = await supabase
                     .from('products')
-                    .select('*');
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
                 if (error) {
                     throw error;
@@ -81,7 +82,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
     const getProductsByCollection = async (collectionId: string) => {
         try {
-            const { data, error } = await supabase.from('products').select('*').eq('collection', collectionId);
+            const { data, error } = await supabase.from('products').select('*').eq('collection', collectionId).order('created_at', { ascending: false });
             if (error) throw error;
             return data.map((p: any) => ({
                 id: p.id,
