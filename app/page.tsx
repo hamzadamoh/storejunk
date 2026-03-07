@@ -10,10 +10,10 @@ import { useCart } from "@/context/CartContext";
 import FallbackImage from "@/components/FallbackImage";
 
 export default function Home() {
-  const { products, isLoading: productsLoading, error: productsError } = useProducts();
+  const { products, isLoading: productsLoading, error: productsError, hasMore, loadMore } = useProducts();
   const { collections } = useCollections();
   const { addToCart } = useCart();
-  const newArrivals = [...products].reverse().slice(0, 4); // Get last 4 products as new arrivals
+  const newArrivals = products; // Already descending order from context
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -295,6 +295,18 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            {hasMore && (
+              <div className="flex justify-center mt-12">
+                <button
+                  onClick={loadMore}
+                  disabled={productsLoading}
+                  className="px-8 py-3 rounded-full border-2 border-primary text-primary font-bold hover:bg-primary hover:text-charcoal transition-colors disabled:opacity-50"
+                >
+                  {productsLoading ? "Loading..." : "Load More Arrivals"}
+                </button>
+              </div>
+            )}
           </div>
         </section>
 

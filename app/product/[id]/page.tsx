@@ -2,24 +2,29 @@
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useProducts } from "@/context/ProductContext";
+import { useProducts, Product } from "@/context/ProductContext";
 import { useCart } from "@/context/CartContext";
 import { useParams, useRouter } from "next/navigation";
 import FallbackImage from "@/components/FallbackImage";
 
 export default function DynamicProductPage() {
-    const { getProductById } = useProducts();
+    const { getProductById, getProductsByCollection } = useProducts();
     const { addToCart } = useCart();
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
 
-    const [product, setProduct] = useState<any>(null);
+    const [product, setProduct] = useState<Product | null>(null);
     const [selectedImage, setSelectedImage] = useState<string>("");
+    const [activeIndex, setActiveIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 mins
+    const [activeTab, setActiveTab] = useState<"included" | "how" | "license">("included");
+    const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+    const [isLoadingRelated, setIsLoadingRelated] = useState(false);
 
+    // Timer logic
     useEffect(() => {
         const timer = setInterval(() => {
             setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
@@ -33,16 +38,41 @@ export default function DynamicProductPage() {
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
+    // Load Product and Related Products
     useEffect(() => {
         if (id) {
             getProductById(id).then((p) => {
                 if (p) {
                     setProduct(p);
                     setSelectedImage(p.images[0]);
+                    setActiveIndex(0);
+
+                    // Fetch related products
+                    setIsLoadingRelated(true);
+                    getProductsByCollection(p.collectionId).then((res) => {
+                        // Filter out current product and take 4
+                        setRelatedProducts(res.products.filter(item => item.id !== id).slice(0, 4));
+                        setIsLoadingRelated(false);
+                    });
                 }
             });
         }
-    }, [id, getProductById]);
+    }, [id, getProductById, getProductsByCollection]);
+
+    // Gallery navigation
+    const nextImage = () => {
+        if (!product) return;
+        const next = (activeIndex + 1) % product.images.length;
+        setActiveIndex(next);
+        setSelectedImage(product.images[next]);
+    };
+
+    const prevImage = () => {
+        if (!product) return;
+        const prev = (activeIndex - 1 + product.images.length) % product.images.length;
+        setActiveIndex(prev);
+        setSelectedImage(product.images[prev]);
+    };
 
     const handleBuyNow = () => {
         if (product) {
@@ -52,17 +82,35 @@ export default function DynamicProductPage() {
                 price: product.price,
                 img: product.images[0],
                 type: product.type
-            }, false); // don't open drawer
+            }, false);
             router.push("/checkout");
         }
     };
 
+    const jsonLd = useMemo(() => {
+        if (!product) return null;
+        return {
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": product.title,
+            "image": product.images,
+            "description": product.description,
+            "sku": product.sku || product.id,
+            "offers": {
+                "@type": "Offer",
+                "url": typeof window !== 'undefined' ? window.location.href : "",
+                "priceCurrency": "USD",
+                "price": product.price,
+                "availability": "https://schema.org/InStock"
+            }
+        };
+    }, [product]);
+
     if (!product) {
         return (
-            <div className="bg-background-light dark:bg-background-dark min-h-screen text-charcoal dark:text-stone-200 flex items-center justify-center">
+            <div className="bg-[#0d0d0d] min-h-screen text-stone-200 flex items-center justify-center">
                 <div className="text-center space-y-4">
-                    <h1 className="text-2xl font-bold">Product Loading...</h1>
-                    <p className="text-stone-500">Or product not found.</p>
+                    <h1 className="text-2xl font-bold font-serif italic">Curating your kit...</h1>
                     <Link href="/" className="text-primary hover:underline">Return Home</Link>
                 </div>
             </div>
@@ -70,133 +118,141 @@ export default function DynamicProductPage() {
     }
 
     return (
-        <div className="bg-background-light dark:bg-background-dark text-neutral-900 dark:text-gray-100 font-display min-h-screen">
-            <title>{product.title} | TinyStepsArtLTD</title>
-            <meta name="description" content={product.description || `Buy ${product.title} junk journal kit at TinyStepsArtLTD.`} />
+        <div className="bg-[#0d0d0d] text-stone-200 font-display min-h-screen relative overflow-hidden">
+            {/* Paper Texture Overlay */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-[100]" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/natural-paper.png')" }}></div>
+
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+
             <Navbar />
-            <main className="max-w-7xl mx-auto px-6 md:px-20 py-10">
+
+            <main className="max-w-7xl mx-auto px-6 md:px-20 py-10 relative z-10">
                 {/* Breadcrumbs */}
-                <nav className="flex items-center gap-2 text-sm text-gray-500 mb-8">
-                    <Link href="/" className="hover:text-primary">
-                        Home
-                    </Link>
-                    <span className="material-symbols-outlined text-xs">
-                        chevron_right
-                    </span>
-                    <Link href={`/collections/${product.collectionId}`} className="hover:text-primary capitalize">
+                <nav className="flex items-center gap-2 text-xs text-stone-500 mb-8 uppercase tracking-widest font-bold">
+                    <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+                    <span className="material-symbols-outlined text-[10px]">chevron_right</span>
+                    <Link href={`/collections/${product.collectionId}`} className="hover:text-primary transition-colors capitalize">
                         {product.collectionId.replace('-', ' ')}
                     </Link>
-                    <span className="material-symbols-outlined text-xs">
-                        chevron_right
-                    </span>
-                    <span className="dark:text-white font-bold">{product.title}</span>
+                    <span className="material-symbols-outlined text-[10px]">chevron_right</span>
+                    <span className="text-stone-300">{product.title}</span>
                 </nav>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                    {/* Left Column: Gallery */}
-                    <div className="lg:col-span-7 flex flex-col md:flex-row-reverse gap-4">
-                        {/* Main Image */}
-                        <div className="flex-1">
-                            <div className="bg-neutral-dark rounded-xl overflow-hidden grunge-border relative group">
-                                <div className="absolute top-4 left-4 z-10 bg-[#4a1c1c] text-[#f4ebd8] px-3 py-1 text-xs font-serif font-bold uppercase tracking-widest rounded-sm border border-black/20 shadow-lg">
-                                    Bestseller
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+                    {/* Left Column: Premium Gallery */}
+                    <div className="lg:col-span-7 space-y-6">
+                        <div className="relative group">
+                            {/* Gold Glow behind image */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+                            <div className="relative bg-stone-900 rounded-2xl overflow-hidden shadow-2xl border border-stone-800/50 aspect-square flex items-center justify-center">
+                                {/* Navigation Arrows */}
+                                <button onClick={prevImage} className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary hover:text-charcoal shadow-xl">
+                                    <span className="material-symbols-outlined">chevron_left</span>
+                                </button>
+                                <button onClick={nextImage} className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary hover:text-charcoal shadow-xl">
+                                    <span className="material-symbols-outlined">chevron_right</span>
+                                </button>
+
+                                <div className="absolute top-6 left-6 z-20">
+                                    <div className="bg-[#4a1c1c] text-[#f4ebd8] px-4 py-1.5 text-[10px] font-serif font-bold uppercase tracking-[0.2em] rounded-sm border border-black/20 shadow-2xl">
+                                        Limited Edition
+                                    </div>
                                 </div>
-                                <FallbackImage
-                                    src={selectedImage}
-                                    alt={product.title}
-                                    title={product.title}
-                                    className="w-full h-auto max-h-[80vh] object-contain transition-transform duration-700 group-hover:scale-105"
-                                />
+
+                                <div className="w-full h-full overflow-hidden">
+                                    <FallbackImage
+                                        src={selectedImage}
+                                        alt={product.title}
+                                        title={product.title}
+                                        className="w-full h-full object-contain p-8 transition-transform duration-1000 ease-out group-hover:scale-110"
+                                    />
+                                </div>
                             </div>
                         </div>
-                        {/* Thumbnails */}
-                        <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto no-scrollbar md:h-[600px] py-1">
-                            {product.images.map((url: string, i: number) => (
-                                <div
+
+                        {/* Thumbnails with Active Effect */}
+                        <div className="flex gap-4 overflow-x-auto no-scrollbar py-2 px-1">
+                            {product.images.map((url, i) => (
+                                <button
                                     key={i}
-                                    onClick={() => setSelectedImage(url)}
-                                    className={`w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-neutral-dark rounded-lg overflow-hidden border cursor-pointer transition-all hover:border-primary/50 ${selectedImage === url ? "border-primary" : "border-border-gold"}`}
+                                    onClick={() => { setSelectedImage(url); setActiveIndex(i); }}
+                                    className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden transition-all duration-300 ${activeIndex === i ? "ring-2 ring-primary scale-105 shadow-[0_0_20px_rgba(230,179,25,0.3)]" : "opacity-60 hover:opacity-100 border border-stone-800"}`}
                                 >
                                     <FallbackImage
                                         src={url}
-                                        alt={`${product.title} thumbnail ${i + 1}`}
+                                        alt={`${product.title} view ${i + 1}`}
                                         title={product.title}
                                         className="w-full h-full object-cover"
                                     />
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* Right Column: Product Info (Sticky) */}
+                    {/* Right Column: Premium Product Info */}
                     <div className="lg:col-span-5">
-                        <div className="sticky top-24 flex flex-col gap-6">
-                            <div className="flex flex-col gap-2">
-                                <div className="flex items-center gap-2 text-primary font-medium text-xs tracking-[0.2em] uppercase">
-                                    <span className="material-symbols-outlined text-sm">
-                                        auto_awesome
-                                    </span>
+                        <div className="sticky top-24 space-y-8">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3 text-primary font-bold text-[10px] tracking-[0.3em] uppercase">
+                                    <span className="h-[1px] w-8 bg-primary/40"></span>
                                     <span>{product.type}</span>
                                 </div>
-                                <h2 className="text-4xl md:text-5xl font-serif dark:text-white leading-tight">
+
+                                <h1 className="text-5xl md:text-6xl font-serif font-black dark:text-white leading-tight italic">
                                     {product.title}
-                                </h2>
+                                </h1>
 
-                                {/* Star Rating & Reviews */}
-                                <div className="flex items-center gap-2 mt-1">
-                                    <div className="flex text-primary text-sm">
-                                        <span className="material-symbols-outlined shrink-0 text-base" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                        <span className="material-symbols-outlined shrink-0 text-base" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                        <span className="material-symbols-outlined shrink-0 text-base" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                        <span className="material-symbols-outlined shrink-0 text-base" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                        <span className="material-symbols-outlined shrink-0 text-base" style={{ fontVariationSettings: "'FILL' 1" }}>star_half</span>
+                                <div className="h-[1px] w-full bg-gradient-to-r from-primary/60 via-primary/10 to-transparent"></div>
+
+                                {/* Star Rating Upgrade */}
+                                <div className="flex items-center gap-4">
+                                    <div className="flex text-primary gap-0.5">
+                                        {[1, 2, 3, 4, 5].map(star => (
+                                            <span key={star} className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                        ))}
                                     </div>
-                                    <span className="text-stone-600 dark:text-stone-400 font-serif text-sm italic">
-                                        4.9 ★ (2,400+ reviews)
+                                    <span className="text-stone-500 font-serif italic text-sm">
+                                        4.9 / 5.0 (Hand-verified reviews)
                                     </span>
                                 </div>
 
-                                {/* Pricing */}
-                                <div className="flex items-baseline gap-4 mt-2">
-                                    <span className="text-3xl font-bold text-primary font-serif">
-                                        ${product.price.toFixed(2)}
-                                    </span>
-                                    <span className="text-xl text-stone-500 line-through font-serif italic">
-                                        ${(product.price * 1.42).toFixed(2)}
-                                    </span>
-                                    <span className="bg-[#4a1c1c] text-[#f4ebd8] text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm">
-                                        Save 30%
-                                    </span>
-                                    <span className="text-red-500 dark:text-red-400 text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[14px]">timer</span>
-                                        Offer ends in {formatTime(timeLeft)}
-                                    </span>
+                                {/* Pricing Section Upgrade */}
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex items-center gap-6">
+                                        <span className="text-5xl font-black text-primary font-serif italic">
+                                            ${product.price.toFixed(2)}
+                                        </span>
+                                        <div className="flex flex-col">
+                                            <span className="text-xl text-stone-600 line-through font-serif italic decoration-primary/40 leading-none">
+                                                ${(product.price * 1.42).toFixed(2)}
+                                            </span>
+                                            <span className="text-primary font-bold text-[10px] uppercase tracking-widest mt-1">First Time Discount Applied</span>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-[#f4ebd8]/60 text-sm italic font-serif">
+                                        "Only a few sets left at this boutique price point"
+                                    </p>
+
+                                    {/* Pill Styled Countdown */}
+                                    <div className="inline-flex items-center gap-3 bg-stone-900/80 border border-stone-800 px-5 py-2.5 rounded-full w-fit shadow-inner">
+                                        <span className="relative flex h-3 w-3">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                        </span>
+                                        <span className="text-stone-300 text-xs font-bold uppercase tracking-widest">
+                                            Special ends in <span className="text-primary tabular-nums">{formatTime(timeLeft)}</span>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Benefit Bullets */}
-                            <ul className="space-y-2 mt-2">
-                                {[
-                                    "✓ Instant download after purchase",
-                                    "✓ High-res 300 DPI, print-ready files",
-                                    "✓ A4 & US Letter included"
-                                ].map((bullet, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-sm text-stone-600 dark:text-stone-400">
-                                        <span className="text-[#4a1c1c] dark:text-primary font-bold">{bullet.charAt(0)}</span>
-                                        <span className="font-serif italic">{bullet.substring(2)}</span>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            {/* Bonus Banner */}
-                            <div className="bg-[#f4ebd8] dark:bg-stone-800 border border-[#d4c5b0] dark:border-stone-700 p-4 rounded-lg flex items-center gap-3 mt-2 shadow-sm">
-                                <span className="text-2xl">🎁</span>
-                                <span className="text-charcoal dark:text-stone-200 font-serif font-bold italic text-sm">
-                                    Free matching bookmark sheet included
-                                </span>
-                            </div>
-
-                            <div className="flex flex-col gap-3 mt-4">
+                            {/* Buttons Upgrade */}
+                            <div className="flex flex-col gap-4">
                                 <button
                                     onClick={() => addToCart({
                                         id: product.id,
@@ -205,52 +261,125 @@ export default function DynamicProductPage() {
                                         img: product.images[0],
                                         type: product.type
                                     })}
-                                    className="w-full bg-[#4a1c1c] hover:bg-[#3d1717] text-[#f4ebd8] font-serif font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md"
+                                    className="group relative w-full bg-primary text-charcoal font-serif font-black text-xl py-6 rounded-xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_10px_30px_rgba(230,179,25,0.2)] overflow-hidden"
                                 >
-                                    <span className="material-symbols-outlined font-bold">
-                                        shopping_cart
-                                    </span>
-                                    Add to Cart
+                                    <div className="absolute inset-0 w-1/2 h-full bg-white/20 -skew-x-[45deg] -translate-x-[200%] group-hover:animate-[shimmer_2s_infinite]"></div>
+                                    <div className="flex items-center justify-center gap-3 relative z-10">
+                                        <span className="material-symbols-outlined font-black">lock_open</span>
+                                        Unlock Kit Access
+                                    </div>
                                 </button>
+
+                                <style jsx>{`
+                                    @keyframes shimmer {
+                                        0% { transform: translateX(-200%) skewX(-45deg); }
+                                        100% { transform: translateX(300%) skewX(-45deg); }
+                                    }
+                                `}</style>
 
                                 <button
                                     onClick={handleBuyNow}
-                                    className="w-full bg-transparent border-2 border-[#4a1c1c] hover:bg-[#4a1c1c]/10 dark:border-primary dark:hover:bg-primary/10 text-[#4a1c1c] dark:text-primary font-serif font-bold py-4 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+                                    className="w-full bg-transparent border-2 border-stone-800 hover:bg-stone-800/50 text-stone-300 font-serif font-bold py-5 rounded-xl transition-all flex items-center justify-center tracking-widest uppercase text-sm"
                                 >
-                                    Buy It Now
+                                    Express Checkout
                                 </button>
                             </div>
 
-                            {/* Trust Icons Row */}
-                            <div className="flex items-center justify-center gap-4 py-4 text-xs font-serif text-stone-500 dark:text-stone-400 italic text-center">
-                                <div className="flex flex-col items-center gap-1">
-                                    <span className="text-lg">🔒</span>
-                                    <span>Secure Checkout</span>
+                            {/* Tabbed Section */}
+                            <div className="space-y-6 pt-8 border-t border-stone-800/50">
+                                <div className="flex gap-8 border-b border-stone-800/50">
+                                    {[
+                                        { id: "included", label: "What's Included" },
+                                        { id: "how", label: "How To Use" },
+                                        { id: "license", label: "License" }
+                                    ].map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id as any)}
+                                            className={`pb-4 text-sm font-serif italic transition-all relative ${activeTab === tab.id ? "text-primary font-bold" : "text-stone-500 hover:text-stone-300"}`}
+                                        >
+                                            {tab.label}
+                                            {activeTab === tab.id && (
+                                                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary"></div>
+                                            )}
+                                        </button>
+                                    ))}
                                 </div>
-                                <span className="text-stone-300 dark:text-stone-600">&bull;</span>
-                                <div className="flex flex-col items-center gap-1">
-                                    <span className="text-lg">⚡</span>
-                                    <span>Instant Delivery</span>
-                                </div>
-                                <span className="text-stone-300 dark:text-stone-600">&bull;</span>
-                                <div className="flex flex-col items-center gap-1">
-                                    <span className="text-lg">🖨️</span>
-                                    <span>Print-Ready Files</span>
-                                </div>
-                            </div>
-
-                            <div className="pt-6 border-t border-border-gold">
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-primary mb-3">
-                                    Description
-                                </h4>
-                                <div className="prose prose-invert text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
-                                    {product.description || "No description available for this product."}
+                                <div className="min-h-[150px] text-stone-400 text-sm leading-relaxed font-serif italic">
+                                    {activeTab === "included" && (
+                                        <div className="whitespace-pre-wrap transition-all duration-500 animate-in fade-in slide-in-from-bottom-2">
+                                            {product.description || "Every texture and ephemera piece in this kit is handcrafted at 300 DPI for premium print results."}
+                                        </div>
+                                    )}
+                                    {activeTab === "how" && (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                            <p>1. Download your high-resolution PDF/JPG bundle instantly.</p>
+                                            <p>2. Print at home or your local boutique print shop (A4 or US Letter).</p>
+                                            <p>3. Cut, distress, and weave into your journaling masterpieces.</p>
+                                        </div>
+                                    )}
+                                    {activeTab === "license" && (
+                                        <div className="animate-in fade-in slide-in-from-bottom-2">
+                                            <p className="mb-4">Standard Personal License included with every purchase.</p>
+                                            <ul className="list-disc pl-5 space-y-2">
+                                                <li>Unlimited personal creative projects</li>
+                                                <li>Gift physical creations to friends & family</li>
+                                                <li>No commercial resale or redistribution of digital files permitted</li>
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* You May Also Like Section */}
+                {relatedProducts.length > 0 && (
+                    <section className="mt-32 pt-24 border-t border-stone-800/50">
+                        <div className="flex items-center justify-between mb-16">
+                            <div className="space-y-2">
+                                <h2 className="font-serif text-4xl font-black italic text-white drop-shadow-lg">
+                                    You May Also Like
+                                </h2>
+                                <p className="text-stone-500 italic text-sm">Hand-picked companions from the {product.collectionId} collection</p>
+                            </div>
+                            <Link href={`/collections/${product.collectionId}`} className="group flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-xs">
+                                View Full Collection
+                                <span className="material-symbols-outlined transition-transform group-hover:translate-x-2">trending_flat</span>
+                            </Link>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+                            {relatedProducts.map((p) => (
+                                <div key={p.id} className="group space-y-5">
+                                    <Link href={`/product/${p.id}`} className="block relative overflow-hidden rounded-2xl bg-stone-900 border border-stone-800 shadow-2xl aspect-square">
+                                        <FallbackImage
+                                            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:opacity-60 relative z-10"
+                                            alt={p.title}
+                                            title={p.title}
+                                            src={p.images?.[0]}
+                                        />
+                                        <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                                            <span className="px-6 py-2 bg-charcoal text-primary border border-primary/30 rounded-full font-serif font-black italic shadow-2xl scale-90 group-hover:scale-100 transition-transform">
+                                                Discover Kit
+                                            </span>
+                                        </div>
+                                    </Link>
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between items-center text-stone-200">
+                                            <h3 className="font-serif font-black italic text-lg line-clamp-1">{p.title}</h3>
+                                            <span className="text-primary font-bold">${p.price.toFixed(2)}</span>
+                                        </div>
+                                        <p className="text-stone-600 font-serif italic text-sm">{p.type}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
             </main>
+
             <Footer />
         </div>
     );
