@@ -102,7 +102,7 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
                 <Link
-                  href="/product/botanical-grimoire"
+                  href="/shop"
                   className="w-full sm:w-auto px-10 py-4 bg-primary text-charcoal font-bold rounded-lg hover:shadow-[0_0_20px_rgba(230,179,25,0.4)] transition-all flex items-center justify-center"
                 >
                   Shop All Kits
@@ -115,7 +115,7 @@ export default function Home() {
                 <img
                   className="w-full h-full object-cover opacity-80 grayscale"
                   alt="Vintage botanical paper textures stacked"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8jPsKGKpXG47LuiIrDIITMcUaiJf--rFdee3yvdfccCrqPCwHLIeWM1fVLaOsLv36pQM8XlviU4rbdQeRargLZViPawMTJLTDFeXpH38CxyD3P94WOJ4OSEXs9seik_Yg294hdWlpztuYSz1IE4pW5Oy4ImFH1pAEWRsgT0oelUlDoSoPF5zmeuq6k9qyUYBbn1BhPmqI8BY6_MiFq9TPSsuiHE-Tqaf2YaykHn7nIY9XnKT79-OCKFQJzKnPOyVbVvZAX-qgY3Jf"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLafap-MoFFSS6iowwQFeZSGLNY2UvYmcFEZvi2fwKYnJwwvb3IUOOEVvoXiT6cyt3h6RJ6HJssIWEZCYA9OLecfBTYA2L3V_ZSYpPIavA2wiUmd7fFO9bzMXbqVWwA-ynMJZBk_1Ox-uwjlQqhNI77Rb7oh3PfXem69qg-V6ZENuh8lcEBC3gl9xVvv1FAp_ARIwULfBUOXQ95bCf0mh5pyDVlT85BLSE0E_vr-4XATzIhB2LktMhAKh2Fg5vcg6icfiyEWlkT-wU"
                 />
               </div>
               <div className="absolute inset-0 bg-stone-300 -rotate-3 -translate-x-4 translate-y-4 paper-layer rounded-sm overflow-hidden border-8 border-white">
@@ -126,7 +126,7 @@ export default function Home() {
                 />
               </div>
               <div className="absolute inset-0 bg-white rotate-2 paper-layer rounded-sm overflow-hidden border-8 border-white group cursor-pointer">
-                <Link href="/product/botanical-grimoire">
+                <Link href="/shop">
                   <img
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     alt="Floral Victorian ephemera background"
