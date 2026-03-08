@@ -23,6 +23,8 @@ export default function DynamicProductPage() {
     const [activeTab, setActiveTab] = useState<"included" | "how" | "license">("included");
     const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
     const [isLoadingRelated, setIsLoadingRelated] = useState(false);
+    const [showBuyNowModal, setShowBuyNowModal] = useState(false);
+    const [buyNowEmail, setBuyNowEmail] = useState("");
 
     // Timer logic
     useEffect(() => {
@@ -76,14 +78,17 @@ export default function DynamicProductPage() {
 
     const handleBuyNow = () => {
         if (product) {
-            addToCart({
-                id: product.id,
-                title: product.title,
-                price: product.price,
-                img: product.images[0],
-                type: product.type
-            }, false);
-            router.push("/checkout");
+            setShowBuyNowModal(true);
+        }
+    };
+
+    const confirmBuyNow = () => {
+        if (!buyNowEmail) {
+            alert("Please enter your email to continue.");
+            return;
+        }
+        if (product) {
+            router.push(`/api/checkout?products=${product.polar_product_id}&customerEmail=${buyNowEmail}`);
         }
     };
 
@@ -381,6 +386,48 @@ export default function DynamicProductPage() {
             </main>
 
             <Footer />
+
+            {/* Buy It Now Email Modal */}
+            {showBuyNowModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowBuyNowModal(false)}></div>
+                    <div className="relative bg-stone-900 border border-stone-800 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                        <div className="text-center space-y-2">
+                            <h3 className="font-serif text-2xl font-black italic text-white text-center">Ready to Download?</h3>
+                            <p className="text-stone-400 text-sm italic">Enter your email to receive your secure download links instantly after purchase.</p>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-widest font-black text-primary">Your Email Address</label>
+                                <input
+                                    type="email"
+                                    value={buyNowEmail}
+                                    onChange={(e) => setBuyNowEmail(e.target.value)}
+                                    placeholder="collector@artisan.com"
+                                    className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all font-serif italic"
+                                    autoFocus
+                                />
+                            </div>
+                            <button
+                                onClick={confirmBuyNow}
+                                className="w-full bg-primary text-charcoal font-serif font-black text-lg py-4 rounded-xl shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined font-black">lock_open</span>
+                                Proceed to Checkout
+                            </button>
+                            <button
+                                onClick={() => setShowBuyNowModal(false)}
+                                className="w-full text-stone-500 text-xs uppercase tracking-widest font-bold hover:text-stone-300 transition-colors"
+                            >
+                                Nevermind, go back
+                            </button>
+                        </div>
+                        <div className="pt-4 border-t border-stone-800 text-center">
+                            <p className="text-[10px] text-stone-600 uppercase tracking-widest font-medium">Secured by Polar.sh</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

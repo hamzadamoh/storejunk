@@ -14,6 +14,7 @@ export type Product = {
     description?: string;
     sku?: string;
     tags?: string[];
+    polar_product_id?: string;
 };
 
 type ProductContextType = {
@@ -50,7 +51,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
             const { data, error, count } = await supabase
                 .from('products')
-                .select('id, title, price, collection, type, images', { count: 'exact' })
+                .select('id, title, price, collection, type, images, polar_product_id', { count: 'exact' })
                 .order('created_at', { ascending: false })
                 .range(start, end);
 
@@ -66,6 +67,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                     type: p.type,
                     images: p.images || [],
                     collectionId: p.collection,
+                    polar_product_id: p.polar_product_id,
                 }));
 
                 setProducts(prev => isInitial ? formattedProducts : [...prev, ...formattedProducts]);
@@ -118,7 +120,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
             const { data, error, count } = await supabase
                 .from('products')
-                .select('id, title, price, collection, type, images', { count: 'exact' })
+                .select('id, title, price, collection, type, images, polar_product_id', { count: 'exact' })
                 .eq('collection', collectionId)
                 .order('created_at', { ascending: false })
                 .range(start, end);
@@ -132,6 +134,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                 type: p.type,
                 images: p.images || [],
                 collectionId: p.collection,
+                polar_product_id: p.polar_product_id,
             })) as Product[];
 
             const hasMoreResults = count ? start + PRODUCTS_PER_PAGE < count : false;
@@ -179,7 +182,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
                 collectionId: data.collection,
                 description: data.description,
                 sku: data.sku,
-                tags: data.tags || []
+                tags: data.tags || [],
+                polar_product_id: data.polar_product_id
             } as Product;
 
             // Save to Cache

@@ -3,35 +3,45 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
-import { useSettings } from "@/context/SettingsContext";
-import { useOrders } from "@/context/OrderContext";
+import { useProducts } from "@/context/ProductContext";
 import { useRouter } from "next/navigation";
-import { PayPalScriptProvider } from "@paypal/react-paypal-js";
-import PayPalButtonWrapper from "@/components/PayPalButtonWrapper";
 
 export default function CheckoutPage() {
-    const { cartItems, cartTotal, clearCart } = useCart();
-    const { isTestMode } = useSettings();
-    const { addOrder } = useOrders();
+    const { cartItems, cartTotal } = useCart();
+    const { products: allProducts } = useProducts();
     const router = useRouter();
-    const [paymentMethod, setPaymentMethod] = useState("card");
-
-    const saveOrder = async (method: string) => {
-        try {
-            await addOrder({
-                id: Date.now().toString(),
-                email: '',
-                items: cartItems.map(item => ({ id: item.id, title: item.title, price: item.price, type: item.type })),
-                total: finalTotal,
-                payment_method: method,
-                is_test: isTestMode,
-            });
-        } catch (err) {
-            console.error('Failed to save order:', err);
-        }
-    };
+    const [email, setEmail] = useState("");
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const finalTotal = cartTotal;
+
+    const handleCompletePurchase = () => {
+        if (!email) {
+            alert("Please enter your email address to continue.");
+            return;
+        }
+
+        setIsProcessing(true);
+
+        // Build the Polar.sh checkout URL
+        const polarProductIds = cartItems.map(item => {
+            // Find the product in allProducts to get the polar_product_id
+            const product = allProducts.find(p => p.id === item.id);
+            return product?.polar_product_id;
+        }).filter(Boolean);
+
+        if (polarProductIds.length === 0) {
+            alert("No Polar products found in your cart. Please contact support.");
+            setIsProcessing(false);
+            return;
+        }
+
+        const queryParams = new URLSearchParams();
+        polarProductIds.forEach(id => queryParams.append("products", id!));
+        queryParams.append("customerEmail", email);
+
+        router.push(`/api/checkout?${queryParams.toString()}`);
+    };
 
     if (cartItems.length === 0) {
         return (
@@ -49,7 +59,6 @@ export default function CheckoutPage() {
 
     return (
         <div className="bg-background-light dark:bg-background-dark font-display text-white overflow-x-hidden parchment-texture min-h-screen flex flex-col">
-            {/* Top Navigation - Checkout Specific */}
             <header className="flex items-center justify-between border-b border-solid border-border-dark px-6 md:px-20 py-4 bg-background-dark/80 backdrop-blur-md sticky top-0 z-40">
                 <div className="flex items-center gap-4">
                     <Link href="/" className="text-primary size-8 hover:opacity-80 transition-opacity">
@@ -59,15 +68,9 @@ export default function CheckoutPage() {
                         TinyStepsArtLTD
                     </h2>
                 </div>
-                <nav className="hidden md:flex flex-1 justify-end gap-10">
-                    <Link href="/" className="text-muted-gold hover:text-primary transition-colors text-sm font-medium uppercase tracking-tighter">Shop</Link>
-                    <Link href="/collections" className="text-muted-gold hover:text-primary transition-colors text-sm font-medium uppercase tracking-tighter">Collections</Link>
-                </nav>
             </header>
 
-            {/* Checkout Content Area */}
             <main className="flex-1 px-6 md:px-20 py-12 max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 relative">
-                {/* Left Column: Email & Payment */}
                 <div className="lg:col-span-7 space-y-12">
                     <section>
                         <div className="flex items-center justify-between mb-8">
@@ -76,7 +79,6 @@ export default function CheckoutPage() {
                                 <span className="material-symbols-outlined text-xs">lock</span> Secure Transaction
                             </span>
                         </div>
-                        {/* Step 1: Contact */}
                         <div className="space-y-6">
                             <div className="flex items-center gap-2">
                                 <span className="flex items-center justify-center size-8 rounded-full border border-primary text-primary font-bold text-sm">1</span>
@@ -85,7 +87,14 @@ export default function CheckoutPage() {
                             <div className="bg-surface-dark/50 p-6 rounded-xl border border-border-dark space-y-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-xs font-bold uppercase tracking-widest text-muted-gold">Email Address</label>
-                                    <input type="email" placeholder="collector@artisan.com" className="w-full bg-background-dark border-border-dark rounded-lg px-4 py-3 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-muted-gold/40" />
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="collector@artisan.com"
+                                        className="w-full bg-background-dark border-border-dark rounded-lg px-4 py-3 text-white focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-muted-gold/40"
+                                    />
+                                    <p className="text-[10px] text-stone-500 italic mt-1 font-serif">Your digital downloads will be sent to this address.</p>
                                 </div>
                             </div>
                         </div>
@@ -93,105 +102,52 @@ export default function CheckoutPage() {
 
                     <div className="w-full h-px bg-border-dark"></div>
 
-                    {/* Step 2: Payment */}
                     <section className="space-y-6">
                         <div className="flex items-center gap-2">
                             <span className="flex items-center justify-center size-8 rounded-full border border-primary text-primary font-bold text-sm">2</span>
-                            <h2 className="text-xl font-bold tracking-tight">Payment Method</h2>
+                            <h2 className="text-xl font-bold tracking-tight">Complete Payment</h2>
                         </div>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <button onClick={() => setPaymentMethod("card")} className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${paymentMethod === "card" ? "border-primary bg-primary/5 text-white" : "border-border-dark bg-surface-dark text-muted-gold hover:border-muted-gold"}`}>
-                                    <span className="material-symbols-outlined">credit_card</span> <span className="font-bold">Card</span>
-                                </button>
-                                <button onClick={() => setPaymentMethod("paypal")} className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${paymentMethod === "paypal" ? "border-primary bg-primary/5 text-white" : "border-border-dark bg-surface-dark text-muted-gold hover:border-muted-gold"}`}>
-                                    <span className="material-symbols-outlined">payments</span> <span className="font-bold">PayPal</span>
-                                </button>
+                        <div className="bg-surface-dark/50 p-8 rounded-xl border border-border-dark text-center space-y-6">
+                            <div className="flex flex-col items-center gap-4 text-muted-gold">
+                                <span className="material-symbols-outlined text-5xl">verified_user</span>
+                                <p className="text-sm font-serif italic max-w-sm">We use Polar.sh for secure checkout. Your connection is encrypted and your files will be delivered instantly upon payment.</p>
                             </div>
-
-                            {/* Payment Action Area */}
-                            <div className="mt-8 bg-surface-dark/50 p-6 rounded-xl border border-border-dark">
-                                {isTestMode && (
-                                    <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-500 p-4 rounded-xl text-center font-bold mb-6">
-                                        <span className="material-symbols-outlined align-middle mr-2">warning</span>
-                                        TEST MODE ACTIVE - No real payments will be processed
-                                    </div>
-                                )}
-
-                                {isTestMode ? (
-                                    <button
-                                        onClick={async () => {
-                                            const productIds = cartItems.map(item => item.id).join(",");
-                                            console.log("Test Payment successful");
-                                            await saveOrder('test');
-                                            clearCart();
-                                            router.push(`/thank-you?products=${productIds}`);
-                                        }}
-                                        className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined">check_circle</span>
-                                        SIMULATE SUCCESSFUL PAYMENT
-                                    </button>
+                            <button
+                                onClick={handleCompletePurchase}
+                                disabled={isProcessing}
+                                className="w-full py-5 bg-primary text-charcoal font-serif font-black text-xl rounded-xl shadow-[0_10px_30px_rgba(230,179,25,0.2)] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {isProcessing ? (
+                                    <>
+                                        <span className="w-5 h-5 border-2 border-charcoal/30 border-t-charcoal rounded-full animate-spin"></span>
+                                        Preparing Secure Checkout...
+                                    </>
                                 ) : (
-                                    <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test", components: "buttons", currency: "USD" }}>
-                                        {paymentMethod === "paypal" ? (
-                                            <div className="space-y-4">
-                                                <p className="text-sm text-muted-gold mb-2 text-center">Pay with your PayPal account</p>
-                                                <PayPalButtonWrapper
-                                                    currency={"USD"}
-                                                    showSpinner={true}
-                                                    amount={finalTotal.toFixed(2)}
-                                                    fundingSource="paypal"
-                                                    onSuccess={async (details) => {
-                                                        const productIds = cartItems.map(item => item.id).join(",");
-                                                        console.log("Payment successful", details);
-                                                        await saveOrder('paypal');
-                                                        clearCart();
-                                                        router.push(`/thank-you?products=${productIds}`);
-                                                    }}
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                <p className="text-sm text-muted-gold mb-2 text-center">Pay with Debit or Credit Card</p>
-                                                <PayPalButtonWrapper
-                                                    currency={"USD"}
-                                                    showSpinner={true}
-                                                    amount={finalTotal.toFixed(2)}
-                                                    fundingSource="card"
-                                                    onSuccess={async (details) => {
-                                                        const productIds = cartItems.map(item => item.id).join(",");
-                                                        console.log("Payment successful", details);
-                                                        await saveOrder('card');
-                                                        clearCart();
-                                                        router.push(`/thank-you?products=${productIds}`);
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                    </PayPalScriptProvider>
+                                    <>
+                                        <span className="material-symbols-outlined font-black">lock_open</span>
+                                        Complete Purchase — ${finalTotal.toFixed(2)}
+                                    </>
                                 )}
-                            </div>
+                            </button>
                         </div>
                     </section>
                 </div>
 
-                {/* Right Column: Order Summary */}
                 <aside className="lg:col-span-5 relative">
                     <div className="lg:sticky lg:top-32 bg-surface-dark border border-border-dark rounded-2xl overflow-hidden shadow-2xl">
                         <div className="p-6 border-b border-border-dark flex items-center justify-between">
-                            <h3 className="text-lg font-bold tracking-tight">Order Summary</h3>
-                            <span className="bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold">{cartItems.length} Kits</span>
+                            <h3 className="text-lg font-bold tracking-tight uppercase tracking-widest text-xs">Order Summary</h3>
+                            <span className="bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">{cartItems.length} Kits</span>
                         </div>
                         <div className="p-6 space-y-6 max-h-[400px] overflow-y-auto">
                             {cartItems.map((item, i) => (
                                 <div key={`${item.id}-${i}`} className="flex gap-4 group">
                                     <div className="size-20 bg-background-dark rounded-lg border border-border-dark overflow-hidden shrink-0">
-                                        <img className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt={item.title} src={item.img} />
+                                        <img className="w-full h-full object-cover transition-all" alt={item.title} src={item.img} />
                                     </div>
                                     <div className="flex-1 flex flex-col justify-between py-1">
                                         <div>
-                                            <h4 className="font-bold text-sm">{item.title}</h4>
+                                            <h4 className="font-bold text-sm tracking-tight">{item.title}</h4>
                                             <p className="text-[10px] uppercase tracking-widest text-muted-gold flex items-center gap-1 mt-1">
                                                 <span className="material-symbols-outlined text-[12px] text-primary">download</span> {item.type}
                                             </p>
@@ -204,16 +160,15 @@ export default function CheckoutPage() {
                                 </div>
                             ))}
                         </div>
-                        {/* Pricing Breakdown */}
                         <div className="p-6 bg-background-dark/30 space-y-3">
-                            <div className="flex justify-between text-sm text-muted-gold">
+                            <div className="flex justify-between text-sm text-muted-gold font-serif italic">
                                 <span>Subtotal</span>
                                 <span>${cartTotal.toFixed(2)}</span>
                             </div>
 
-                            <div className="pt-3 border-t border-border-dark flex justify-between">
-                                <span className="font-black uppercase tracking-widest">Total</span>
-                                <span className="font-black text-xl text-primary tracking-tighter">${finalTotal.toFixed(2)}</span>
+                            <div className="pt-3 border-t border-border-dark flex justify-between items-center">
+                                <span className="font-black uppercase tracking-widest text-xs">Total Amount</span>
+                                <span className="font-black text-2xl text-primary tracking-tighter italic font-serif">${finalTotal.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

@@ -55,11 +55,11 @@ function SuccessContent() {
                     <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/20 border-2 border-primary mb-6 animate-pulse">
                         <span className="material-symbols-outlined text-primary text-4xl font-bold">check_circle</span>
                     </div>
-                    <h1 className="font-serif text-5xl md:text-7xl font-black italic text-white">
-                        Wonders Secured
+                    <h1 className="font-serif text-5xl md:text-8xl font-black italic text-white drop-shadow-2xl">
+                        Thank you for your order! 🖤
                     </h1>
-                    <p className="text-stone-400 text-xl max-w-2xl mx-auto italic">
-                        Your transaction was successful. Your grimoire is ready to be expanded.
+                    <p className="text-stone-400 text-xl max-w-2xl mx-auto italic font-serif">
+                        Your grimoire has been expanded. Your treasures are ready for download below.
                     </p>
                 </div>
 
@@ -115,11 +115,11 @@ function SuccessContent() {
                                 <p className="text-white font-serif text-xl italic">{products.length} Items &middot; Total Paid: ${totalPrice.toFixed(2)}</p>
                             </div>
                             <Link
-                                href="/shop"
+                                href="/"
                                 className="px-10 py-4 border border-stone-700 text-white font-bold rounded-xl hover:bg-stone-800 transition-all flex items-center gap-2"
                             >
-                                <span className="material-symbols-outlined">shopping_basket</span>
-                                Back to Shop
+                                <span className="material-symbols-outlined">home</span>
+                                Continue Shopping
                             </Link>
                         </div>
                     </div>
