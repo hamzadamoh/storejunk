@@ -107,12 +107,6 @@ export default function Home() {
                 >
                   Shop All Kits
                 </Link>
-                <Link
-                  href="/lookbook"
-                  className="w-full sm:w-auto px-10 py-4 border border-stone-700 text-white font-bold rounded-lg hover:bg-stone-800 transition-all flex items-center justify-center"
-                >
-                  View Lookbook
-                </Link>
               </div>
             </div>
             {/* Layered Paper Visual */}
@@ -149,33 +143,38 @@ export default function Home() {
           </div>
         </section>
 
-        {/* As Featured In */}
-        <section className="py-8 border-b border-stone-200 dark:border-white/5 bg-stone-100 dark:bg-stone-900 text-center px-6">
-          <p className="text-stone-500 font-serif italic text-sm mb-6">As featured in</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-            <span className="font-serif font-bold text-xl text-stone-400 dark:text-stone-300">Journaler's Digest</span>
-            <span className="font-serif font-bold text-xl text-stone-400 dark:text-stone-300">Victorian Times</span>
-            <span className="font-serif font-bold text-xl text-stone-400 dark:text-stone-300">Gothic Aesthetic</span>
-            <span className="font-serif font-bold text-xl text-stone-400 dark:text-stone-300">The Daily Crafter</span>
-          </div>
-        </section>
-
         {/* Social Proof Strip */}
         <section className="py-8 bg-[#f4ebd8] dark:bg-stone-800 text-charcoal dark:text-stone-300 border-y border-stone-300 dark:border-stone-700">
           <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-12 font-serif text-lg md:text-xl text-center">
             <div className="flex items-center gap-3">
-              <span className="text-primary font-bold text-2xl">{stats.products || "120"}+</span>
+              <span className="text-primary font-bold text-2xl">128+</span>
               <span className="italic">digital kits</span>
             </div>
+
             <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-primary/50"></div>
+
             <div className="flex items-center gap-2">
-              <span className="text-primary font-bold text-2xl">{stats.rating > 0 ? stats.rating.toFixed(1) : "5"}★</span>
-              <span className="italic">average rating</span>
+              {stats.rating > 0 ? (
+                <>
+                  <span className="text-primary font-bold text-2xl">{stats.rating.toFixed(1)}★</span>
+                  <span className="italic">average rating</span>
+                </>
+              ) : (
+                <span className="italic">5★ quality guaranteed</span>
+              )}
             </div>
+
             <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-primary/50"></div>
+
             <div className="flex items-center gap-3">
-              <span className="text-primary font-bold text-2xl">{stats.reviews > 0 ? stats.reviews : "4,800"}+</span>
-              <span className="italic">happy journalers</span>
+              {stats.reviews > 0 ? (
+                <>
+                  <span className="text-primary font-bold text-2xl">{stats.reviews}+</span>
+                  <span className="italic">happy journalers</span>
+                </>
+              ) : (
+                <span className="italic">Instant download · 300 DPI · Print ready</span>
+              )}
             </div>
           </div>
         </section>
