@@ -77,13 +77,23 @@ export default function Footer() {
                             </Link>
                         </li>
                         <li>
-                            <Link href="/policies/refund-policy" className="hover:text-primary transition-colors">
-                                Return Policy
+                            <Link href="/policies/privacy-policy" className="hover:text-primary transition-colors">
+                                Privacy Policy
                             </Link>
                         </li>
                         <li>
-                            <Link href="/policies/shipping-policy" className="hover:text-primary transition-colors">
-                                Delivery Info
+                            <Link href="/policies/terms-of-service" className="hover:text-primary transition-colors">
+                                Terms of Service
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/policies/refund-policy" className="hover:text-primary transition-colors">
+                                Refund Policy
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/policies/cookie-policy" className="hover:text-primary transition-colors">
+                                Cookie Policy
                             </Link>
                         </li>
                     </ul>
@@ -119,8 +129,8 @@ export default function Footer() {
                     <Link href="/policies/refund-policy" className="hover:text-white">
                         Refunds
                     </Link>
-                    <Link href="/policies/shipping-policy" className="hover:text-white">
-                        Delivery
+                    <Link href="/policies/cookie-policy" className="hover:text-white">
+                        Cookies
                     </Link>
                     <Link href="/dashboard" className="hover:text-white">
                         Admin

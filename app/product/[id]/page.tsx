@@ -8,6 +8,16 @@ import { useProducts, Product } from "@/context/ProductContext";
 import { useCart } from "@/context/CartContext";
 import { useParams, useRouter } from "next/navigation";
 import FallbackImage from "@/components/FallbackImage";
+import { supabase } from "@/lib/supabase";
+
+interface Review {
+    id: string;
+    customer_name: string;
+    rating: number;
+    comment: string;
+    created_at: string;
+    verified_purchase: boolean;
+}
 
 export default function DynamicProductPage() {
     const { getProductById, getProductsByCollection } = useProducts();
@@ -25,6 +35,20 @@ export default function DynamicProductPage() {
     const [isLoadingRelated, setIsLoadingRelated] = useState(false);
     const [showBuyNowModal, setShowBuyNowModal] = useState(false);
     const [buyNowEmail, setBuyNowEmail] = useState("");
+
+    // Review System State
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+    const [avgRating, setAvgRating] = useState(0);
+    const [showReviewForm, setShowReviewForm] = useState(false);
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+    const [submissionStatus, setSubmissionStatus] = useState<"idle" | "success" | "error">("idle");
+    const [reviewForm, setReviewForm] = useState({
+        name: "",
+        email: "",
+        rating: 5,
+        comment: ""
+    });
 
     // Timer logic
     useEffect(() => {
@@ -56,10 +80,58 @@ export default function DynamicProductPage() {
                         setRelatedProducts(res.products.filter(item => item.id !== id).slice(0, 4));
                         setIsLoadingRelated(false);
                     });
+
+                    // Fetch Reviews
+                    fetchReviews(p.id);
                 }
             });
         }
     }, [id, getProductById, getProductsByCollection]);
+
+    const fetchReviews = async (productId: string) => {
+        setIsLoadingReviews(true);
+        const { data, error } = await supabase
+            .from('reviews')
+            .select('*')
+            .eq('product_id', productId)
+            .eq('approved', true)
+            .order('created_at', { ascending: false });
+
+        if (data) {
+            setReviews(data);
+            if (data.length > 0) {
+                const sum = data.reduce((acc, r) => acc + r.rating, 0);
+                setAvgRating(sum / data.length);
+            }
+        }
+        setIsLoadingReviews(false);
+    };
+
+    const handleSubmitReview = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!product) return;
+        setIsSubmittingReview(true);
+
+        const { error } = await supabase
+            .from('reviews')
+            .insert([{
+                product_id: product.id,
+                customer_name: reviewForm.name,
+                customer_email: reviewForm.email,
+                rating: reviewForm.rating,
+                comment: reviewForm.comment,
+                approved: false // Pending approval
+            }]);
+
+        if (!error) {
+            setSubmissionStatus("success");
+            setReviewForm({ name: "", email: "", rating: 5, comment: "" });
+            setTimeout(() => setShowReviewForm(false), 3000);
+        } else {
+            setSubmissionStatus("error");
+        }
+        setIsSubmittingReview(false);
+    };
 
     // Gallery navigation
     const nextImage = () => {
@@ -215,13 +287,19 @@ export default function DynamicProductPage() {
 
                                 {/* Star Rating Upgrade */}
                                 <div className="flex items-center gap-4">
-                                    <div className="flex text-primary gap-0.5">
+                                    <div className="flex text-primary/30 gap-0.5">
                                         {[1, 2, 3, 4, 5].map(star => (
-                                            <span key={star} className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                            <span
+                                                key={star}
+                                                className="material-symbols-outlined text-xl"
+                                                style={{ fontVariationSettings: star <= Math.round(avgRating) ? "'FILL' 1" : "'FILL' 0" }}
+                                            >
+                                                star
+                                            </span>
                                         ))}
                                     </div>
                                     <span className="text-stone-500 font-serif italic text-sm">
-                                        4.9 / 5.0 (Hand-verified reviews)
+                                        {reviews.length > 0 ? `${avgRating.toFixed(1)} / 5.0 (${reviews.length} reviews)` : "Be the first to review"}
                                     </span>
                                 </div>
 
@@ -338,6 +416,163 @@ export default function DynamicProductPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Reviews Section */}
+                <section className="mt-32 pt-24 border-t border-stone-800/50">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+                        {/* Review Summary */}
+                        <div className="lg:col-span-4 space-y-6">
+                            <h2 className="font-serif text-4xl font-black italic text-white">Customer Reviews</h2>
+                            <div className="flex items-center gap-6">
+                                <span className="text-6xl font-black text-primary font-serif italic">{avgRating.toFixed(1)}</span>
+                                <div className="space-y-1">
+                                    <div className="flex text-primary gap-0.5">
+                                        {[1, 2, 3, 4, 5].map(star => (
+                                            <span
+                                                key={star}
+                                                className="material-symbols-outlined text-2xl"
+                                                style={{ fontVariationSettings: star <= Math.round(avgRating) ? "'FILL' 1" : "'FILL' 0" }}
+                                            >
+                                                star
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <p className="text-stone-500 text-sm italic font-serif">Based on {reviews.length} approved reviews</p>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setShowReviewForm(!showReviewForm)}
+                                className="w-full py-4 border border-primary/30 text-primary font-serif font-bold italic rounded-xl hover:bg-primary/10 transition-all uppercase tracking-widest text-xs"
+                            >
+                                {showReviewForm ? "Cancel Review" : "Write a Review"}
+                            </button>
+
+                            {showReviewForm && (
+                                <form onSubmit={handleSubmitReview} className="space-y-4 p-6 bg-stone-900/50 border border-stone-800 rounded-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase tracking-widest font-black text-primary">Your Aesthetic Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={reviewForm.name}
+                                            onChange={e => setReviewForm({ ...reviewForm, name: e.target.value })}
+                                            className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white focus:ring-1 focus:ring-primary outline-none font-serif italic"
+                                            placeholder="Gothic Artisan"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase tracking-widest font-black text-primary">Raven Address (Email)</label>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={reviewForm.email}
+                                            onChange={e => setReviewForm({ ...reviewForm, email: e.target.value })}
+                                            className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white focus:ring-1 focus:ring-primary outline-none font-serif italic"
+                                            placeholder="collector@darkart.com"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase tracking-widest font-black text-primary">Rating</label>
+                                        <div className="flex gap-2">
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                                                    className={`material-symbols-outlined text-3xl transition-all ${reviewForm.rating >= star ? "text-primary scale-110" : "text-stone-700 hover:text-stone-500"}`}
+                                                    style={{ fontVariationSettings: reviewForm.rating >= star ? "'FILL' 1" : "'FILL' 0" }}
+                                                >
+                                                    star
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase tracking-widest font-black text-primary">Your Thoughts (Max 500 chars)</label>
+                                        <textarea
+                                            required
+                                            maxLength={500}
+                                            value={reviewForm.comment}
+                                            onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                                            rows={4}
+                                            className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white focus:ring-1 focus:ring-primary outline-none font-serif italic resize-none"
+                                            placeholder="Speak your truth about this kit..."
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmittingReview || submissionStatus === "success"}
+                                        className="w-full py-4 bg-[#4a1c1c] text-[#f4ebd8] font-serif font-black italic rounded-xl hover:bg-[#5d2323] transition-all disabled:opacity-50"
+                                    >
+                                        {isSubmittingReview ? "Sending Word..." : submissionStatus === "success" ? "Received 🖤" : "Submit to the Archives"}
+                                    </button>
+                                    {submissionStatus === "success" && (
+                                        <p className="text-primary text-xs text-center font-serif italic animate-pulse">
+                                            Thank you! Your review will appear after approval. 🖤
+                                        </p>
+                                    )}
+                                    {submissionStatus === "error" && (
+                                        <p className="text-red-400 text-xs text-center font-serif italic">
+                                            The ink ran dry. Please try again.
+                                        </p>
+                                    )}
+                                </form>
+                            )}
+                        </div>
+
+                        {/* Reviews List */}
+                        <div className="lg:col-span-8 space-y-8">
+                            {isLoadingReviews ? (
+                                <div className="space-y-4">
+                                    {[1, 2].map(i => (
+                                        <div key={i} className="h-40 w-full bg-stone-900/40 animate-pulse rounded-2xl"></div>
+                                    ))}
+                                </div>
+                            ) : reviews.length > 0 ? (
+                                reviews.map((review) => (
+                                    <div key={review.id} className="p-8 bg-stone-950/40 border border-stone-800/50 rounded-2xl space-y-4 hover:border-primary/20 transition-all group">
+                                        <div className="flex justify-between items-start">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-3">
+                                                    <h4 className="font-serif font-black italic text-lg text-white">{review.customer_name}</h4>
+                                                    {review.verified_purchase && (
+                                                        <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-sm bg-primary/20 text-primary border border-primary/20">
+                                                            <span className="material-symbols-outlined text-[10px]">verified</span>
+                                                            Verified
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex text-primary gap-0.5">
+                                                    {[1, 2, 3, 4, 5].map(star => (
+                                                        <span
+                                                            key={star}
+                                                            className="material-symbols-outlined text-sm"
+                                                            style={{ fontVariationSettings: star <= review.rating ? "'FILL' 1" : "'FILL' 0" }}
+                                                        >
+                                                            star
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] text-stone-600 font-bold uppercase tracking-widest">
+                                                {new Date(review.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </span>
+                                        </div>
+                                        <p className="text-stone-400 font-serif italic leading-relaxed">
+                                            "{review.comment}"
+                                        </p>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="py-20 text-center border-2 border-dashed border-stone-900 rounded-3xl">
+                                    <span className="material-symbols-outlined text-stone-700 text-6xl mb-4">edit_note</span>
+                                    <p className="text-stone-500 font-serif italic text-xl">Be the first to review this product</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
 
                 {/* You May Also Like Section */}
                 {relatedProducts.length > 0 && (

@@ -25,6 +25,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { name: "Orders", href: "/dashboard/orders", icon: "shopping_bag" },
         { name: "Products", href: "/dashboard/products", icon: "inventory_2" },
         { name: "Add Product", href: "/dashboard/products/add", icon: "add_circle_outline" },
+        { name: "Reviews", href: "/dashboard/reviews", icon: "rate_review" },
     ];
 
     return (

@@ -3,11 +3,12 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProducts } from "@/context/ProductContext";
 import { useCollections } from "@/context/CollectionContext";
 import { useCart } from "@/context/CartContext";
 import FallbackImage from "@/components/FallbackImage";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const { products, isLoading: productsLoading, error: productsError, hasMore, loadMore } = useProducts();
@@ -17,6 +18,36 @@ export default function Home() {
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [stats, setStats] = useState({ products: 0, reviews: 0, rating: 0 });
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const { count: productCount } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true });
+
+        const { data: reviewsData } = await supabase
+          .from('reviews')
+          .select('rating')
+          .eq('approved', true);
+
+        if (reviewsData && reviewsData.length > 0) {
+          const total = reviewsData.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0);
+          setStats({
+            products: productCount || 0,
+            reviews: reviewsData.length,
+            rating: total / reviewsData.length
+          });
+        } else {
+          setStats(prev => ({ ...prev, products: productCount || 0 }));
+        }
+      } catch (err) {
+        console.error("Error fetching stats:", err);
+      }
+    }
+    fetchStats();
+  }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,18 +164,18 @@ export default function Home() {
         <section className="py-8 bg-[#f4ebd8] dark:bg-stone-800 text-charcoal dark:text-stone-300 border-y border-stone-300 dark:border-stone-700">
           <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-12 font-serif text-lg md:text-xl text-center">
             <div className="flex items-center gap-3">
-              <span className="text-primary font-bold text-2xl">4,800+</span>
-              <span className="italic">happy journalers</span>
+              <span className="text-primary font-bold text-2xl">{stats.products || "120"}+</span>
+              <span className="italic">digital kits</span>
             </div>
             <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-primary/50"></div>
             <div className="flex items-center gap-2">
-              <span className="text-primary font-bold text-2xl">5★</span>
+              <span className="text-primary font-bold text-2xl">{stats.rating > 0 ? stats.rating.toFixed(1) : "5"}★</span>
               <span className="italic">average rating</span>
             </div>
             <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-primary/50"></div>
             <div className="flex items-center gap-3">
-              <span className="text-primary font-bold text-2xl">250+</span>
-              <span className="italic">digital kits</span>
+              <span className="text-primary font-bold text-2xl">{stats.reviews > 0 ? stats.reviews : "4,800"}+</span>
+              <span className="italic">happy journalers</span>
             </div>
           </div>
         </section>

@@ -20,5 +20,17 @@ export const POST = Webhooks({
             payment_status: "paid",
             stripe_session_id: id,
         });
+
+        // Mark existing reviews from this email for these products as Verified
+        for (const item of items) {
+            const productId = item.product_id || item.id;
+            if (productId && customer_email) {
+                await supabase
+                    .from("reviews")
+                    .update({ verified_purchase: true })
+                    .eq("customer_email", customer_email)
+                    .eq("product_id", productId);
+            }
+        }
     },
 });
