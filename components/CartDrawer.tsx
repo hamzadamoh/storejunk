@@ -4,10 +4,22 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { usePathname } from "next/navigation";
 
 export default function CartDrawer() {
     const { isCartOpen, toggleCart, cartItems, addToCart, removeFromCart, cartTotal } = useCart();
     const [testMode, setTestMode] = useState(false);
+    const pathname = usePathname();
+
+    // Hide cart drawer components on specific routes
+    const isDashboard = pathname?.startsWith('/dashboard');
+    const isLogin = pathname?.startsWith('/login');
+    const isCheckout = pathname === '/checkout';
+    const isSuccess = pathname?.startsWith('/success');
+
+    if (isDashboard || isLogin || isCheckout || isSuccess) {
+        return null;
+    }
 
     useEffect(() => {
         async function checkTestMode() {

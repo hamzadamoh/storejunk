@@ -8,6 +8,7 @@ import { SettingsProvider } from "@/context/SettingsContext";
 import { OrderProvider } from "@/context/OrderContext";
 import { JournalProvider } from "@/context/JournalProvider";
 import CartDrawer from "@/components/CartDrawer";
+import TopBar from "@/components/TopBar";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -40,9 +41,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background-light dark:bg-background-dark text-charcoal dark:text-stone-200 font-display transition-colors duration-300">
-        <div className="bg-[#4a1c1c] text-[#f4ebd8] text-center text-xs py-2 relative z-[100]">
-          ✨ Free Gothic Noir freebie with every order &middot; Instant download
-        </div>
+        <TopBar />
         <ProductProvider>
           <CollectionProvider>
             <CartProvider>
